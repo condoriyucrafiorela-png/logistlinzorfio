@@ -30,13 +30,6 @@ interface ReporteData {
     entregas: RegistroEntrega[]
 }
 
-interface Persona {
-    id: number
-    nombre: string
-    apellido: string
-    dni: string
-}
-
 const ReporteRutas = () => {
 
     const ahora = new Date()
@@ -64,25 +57,7 @@ const ReporteRutas = () => {
     const [nuevoEstado, setNuevoEstado] = useState("")
     const [guardandoEstado, setGuardandoEstado] = useState(false)
 
-    // Autocompletado chofer
-    const [personal, setPersonal] = useState<Persona[]>([])
-
     const token = localStorage.getItem("token")
-
-    useEffect(() => {
-        const fetchPersonal = async () => {
-            try {
-                const res = await fetch(`${API_URL}/api/personal`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-                const data = await res.json()
-                setPersonal(data.personal)
-            } catch {
-                console.error("Error al cargar personal")
-            }
-        }
-        fetchPersonal()
-    }, [])
 
     const fetchReporte = async (f: string) => {
         setCargando(true)
