@@ -1,6 +1,8 @@
 import type { Request, Response } from "express"
 import * as clientesService from "../services/clientesService.js"
 
+const esIdValido = (id: string) => /^\d+$/.test(id)
+
 export const getClientes = async (_req: Request, res: Response) => {
     try {
         const clientes = await clientesService.listarClientes()
@@ -32,6 +34,10 @@ export const actualizarCliente = async (req: Request, res: Response) => {
     try {
         const id = req.params.id as string
         const { nombre, requerimientos } = req.body
+
+        if (!esIdValido(id)) {
+            return res.status(400).json({ mensaje: "ID inválido." })
+        }
         if (!nombre?.trim()) {
             return res.status(400).json({ mensaje: "El nombre es obligatorio." })
         }
@@ -41,7 +47,7 @@ export const actualizarCliente = async (req: Request, res: Response) => {
         if (error.code === "23505") {
             return res.status(409).json({ mensaje: "Ya existe un cliente con ese nombre." })
         }
-        console.error("❌ ERROR actualizarCliente:", error)
+        console.error("ERROR actualizarCliente:", error)
         res.status(500).json({ mensaje: "Error del servidor." })
     }
 }
@@ -49,10 +55,15 @@ export const actualizarCliente = async (req: Request, res: Response) => {
 export const eliminarCliente = async (req: Request, res: Response) => {
     try {
         const id = req.params.id as string
+
+        if (!esIdValido(id)) {
+            return res.status(400).json({ mensaje: "ID inválido." })
+        }
+
         await clientesService.eliminarCliente(id)
         res.json({ mensaje: "Cliente eliminado." })
     } catch (error) {
-        console.error("❌ ERROR eliminarCliente:", error)
+        console.error("ERROR eliminarCliente:", error)
         res.status(500).json({ mensaje: "Error del servidor." })
     }
 }

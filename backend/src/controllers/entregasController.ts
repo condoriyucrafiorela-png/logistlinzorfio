@@ -1,10 +1,29 @@
 import type { Request, Response } from "express"
 import * as entregasService from "../services/entregasService.js"
 
+// ── Helpers de validación ──────────────────────────────────
+const esFechaValida = (fecha: string) => /^\d{4}-\d{2}-\d{2}$/.test(fecha)
+const esIdValido = (id: string) => /^\d+$/.test(id)
+
+const sanitizarCeldaExcel = (valor: any): string => {
+    const texto = String(valor ?? "")
+    if (/^[=+\-@]/.test(texto)) {
+        return `'${texto}` // el apóstrofe fuerza a Excel a tratarlo como texto, no fórmula
+    }
+    return texto
+}
+
 export const guardarEntregas = async (req: Request, res: Response) => {
     try {
         const { fecha, entregas } = req.body
         const usuarioId = (req as any).usuario?.id
+
+        if (!fecha || !esFechaValida(fecha)) {
+            return res.status(400).json({ mensaje: "Formato de fecha inválido." })
+        }
+        if (!Array.isArray(entregas)) {
+            return res.status(400).json({ mensaje: "Formato de entregas inválido." })
+        }
 
         // Fecha en zona horaria de Lima (UTC-5)
         const ahora = new Date()
@@ -25,7 +44,7 @@ export const guardarEntregas = async (req: Request, res: Response) => {
         res.status(201).json({ mensaje: "Guardado correctamente.", sesionId })
 
     } catch (error) {
-        console.error("❌ ERROR guardarEntregas:", error)
+        console.error("ERROR guardarEntregas:", error)
         res.status(500).json({ mensaje: "Error del servidor." })
     }
 }
@@ -43,6 +62,11 @@ export const getFechas = async (_req: Request, res: Response) => {
 export const getReportePorFecha = async (req: Request, res: Response) => {
     try {
         const fecha = req.params.fecha as string
+
+        if (!esFechaValida(fecha)) {
+            return res.status(400).json({ mensaje: "Formato de fecha inválido." })
+        }
+
         const reporte = await entregasService.obtenerReporte(fecha)
 
         if (!reporte) {
@@ -61,6 +85,10 @@ export const guardarRegistro = async (req: Request, res: Response) => {
         const usuarioId = (req as any).usuario?.id
         const entrega   = req.body
 
+        if (!entrega || typeof entrega !== "object") {
+            return res.status(400).json({ mensaje: "Datos de entrega inválidos." })
+        }
+
         const sesionId = await entregasService.obtenerOCrearSesion(usuarioId)
         await entregasService.upsertRegistro(sesionId, entrega)
 
@@ -74,6 +102,11 @@ export const guardarRegistro = async (req: Request, res: Response) => {
 export const getFoto = async (req: Request, res: Response) => {
     try {
         const id = req.params.id as string
+
+        if (!esIdValido(id)) {
+            return res.status(400).json({ mensaje: "ID inválido." })
+        }
+
         const registro = await entregasService.obtenerFoto(id)
         if (!registro) return res.status(404).json({ mensaje: "No encontrado" })
         res.json({ foto: registro.foto_rechazo })
@@ -85,7 +118,6 @@ export const getFoto = async (req: Request, res: Response) => {
 
 export const subirFotoEvidencia = async (req: Request, res: Response) => {
     try {
-        // cast para acceder a req.file que agrega multer en runtime
         const file = (req as any).file as Express.Multer.File | undefined
         if (!file) {
             return res.status(400).json({ mensaje: "No se recibió ningún archivo." })
@@ -100,8 +132,13 @@ export const subirFotoEvidencia = async (req: Request, res: Response) => {
 
 export const actualizarEstado = async (req: Request, res: Response) => {
     try {
-        const id     = req.params.id as string
+        const id = req.params.id as string
         const { estado } = req.body
+
+        if (!esIdValido(id)) {
+            return res.status(400).json({ mensaje: "ID inválido." })
+        }
+
         const estadosValidos = ["conforme", "no_despachado"]
         if (!estadosValidos.includes(estado)) {
             return res.status(400).json({ mensaje: "Estado no válido." })
@@ -116,7 +153,26 @@ export const actualizarEstado = async (req: Request, res: Response) => {
 
 export const crearGestion = async (req: Request, res: Response) => {
     try {
-        await entregasService.guardarGestion(req.body)
+        const { registroId, empresaCliente, nroVale, tipoGestion, descripcion, chofer } = req.body
+
+        if (!registroId || !Number.isInteger(Number(registroId))) {
+            return res.status(400).json({ mensaje: "registroId inválido." })
+        }
+        if (!empresaCliente?.trim() || !tipoGestion?.trim() || !descripcion?.trim()) {
+            return res.status(400).json({ mensaje: "Empresa, tipo de gestión y descripción son obligatorios." })
+        }
+        if (descripcion.length > 1000) {
+            return res.status(400).json({ mensaje: "Descripción demasiado larga." })
+        }
+
+        await entregasService.guardarGestion({
+            registroId,
+            empresaCliente: empresaCliente.trim(),
+            nroVale,
+            tipoGestion: tipoGestion.trim(),
+            descripcion: descripcion.trim(),
+            chofer
+        })
         res.status(201).json({ mensaje: "Gestión guardada." })
     } catch (error) {
         console.error("ERROR crearGestion:", error)
@@ -127,6 +183,11 @@ export const crearGestion = async (req: Request, res: Response) => {
 export const getPendientesGestion = async (req: Request, res: Response) => {
     try {
         const fecha = (req.query.fecha as string) ?? new Date().toISOString().split("T")[0]
+
+        if (!esFechaValida(fecha)) {
+            return res.status(400).json({ mensaje: "Formato de fecha inválido." })
+        }
+
         const pendientes = await entregasService.listarPendientesGestion(fecha)
         res.json({ total: pendientes.length, pendientes })
     } catch (error) {
@@ -138,10 +199,15 @@ export const getPendientesGestion = async (req: Request, res: Response) => {
 export const getGestiones = async (req: Request, res: Response) => {
     try {
         const fecha = (req.query.fecha as string) ?? new Date().toISOString().split("T")[0]
+
+        if (!esFechaValida(fecha)) {
+            return res.status(400).json({ mensaje: "Formato de fecha inválido." })
+        }
+
         const gestiones = await entregasService.listarGestiones(fecha)
         res.json({ gestiones })
     } catch (error) {
-        console.error("❌ ERROR getGestiones:", error)
+        console.error("ERROR getGestiones:", error)
         res.status(500).json({ mensaje: "Error del servidor." })
     }
 }
@@ -149,6 +215,11 @@ export const getGestiones = async (req: Request, res: Response) => {
 export const descargarGestionesExcel = async (req: Request, res: Response) => {
     try {
         const fecha = (req.query.fecha as string) ?? new Date().toISOString().split("T")[0]
+
+        if (!esFechaValida(fecha)) {
+            return res.status(400).json({ mensaje: "Formato de fecha inválido." })
+        }
+
         const gestiones = await entregasService.listarGestiones(fecha)
 
         const ExcelJS = (await import("exceljs")).default
@@ -163,7 +234,7 @@ export const descargarGestionesExcel = async (req: Request, res: Response) => {
             { header: "Número de Guías",    key: "nro_guia",        width: 14 },
             { header: "Clase",              key: "tipo_gestion",    width: 18 },
             { header: "Descripción",        key: "descripcion",     width: 35 },
-            { header: "Chofer",             key: "motivo_rechazo",  width: 12 }, // ← cambiado
+            { header: "Chofer",             key: "motivo_rechazo",  width: 12 },
         ]
 
         sheet.getRow(1).font = { bold: true }
@@ -171,13 +242,13 @@ export const descargarGestionesExcel = async (req: Request, res: Response) => {
         gestiones.forEach((g: any) => {
             sheet.addRow({
                 fecha:           new Date(g.fecha).toLocaleDateString("es-PE"),
-                empresa_cliente: g.empresa_cliente,
-                nro_vale:        g.nro_vale,
-                nro_pedido:      g.nro_pedido,
-                nro_guia:        g.nro_guia,
-                tipo_gestion:    g.tipo_gestion,
-                descripcion:     g.descripcion,
-                motivo_rechazo:  g.motivo_rechazo ?? "—",  // ← cambiado
+                empresa_cliente: sanitizarCeldaExcel(g.empresa_cliente),
+                nro_vale:        sanitizarCeldaExcel(g.nro_vale),
+                nro_pedido:      sanitizarCeldaExcel(g.nro_pedido),
+                nro_guia:        sanitizarCeldaExcel(g.nro_guia),
+                tipo_gestion:    sanitizarCeldaExcel(g.tipo_gestion),
+                descripcion:     sanitizarCeldaExcel(g.descripcion),
+                motivo_rechazo:  sanitizarCeldaExcel(g.motivo_rechazo ?? "—"),
             })
         })
 
@@ -187,7 +258,7 @@ export const descargarGestionesExcel = async (req: Request, res: Response) => {
         await workbook.xlsx.write(res)
         res.end()
     } catch (error) {
-        console.error("❌ ERROR descargarGestionesExcel:", error)
+        console.error("ERROR descargarGestionesExcel:", error)
         res.status(500).json({ mensaje: "Error del servidor." })
     }
 }

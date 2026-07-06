@@ -25,7 +25,15 @@ app.use(rateLimit({
     message: { mensaje: "Demasiadas solicitudes, intente más tarde." }
 }))
 
-app.use(cors({ origin: "http://localhost:5173" }))
+// ── CORS: ahora acepta local Y producción ──
+app.use(cors({
+    origin: [
+        "http://localhost:5173",
+        process.env.FRONTEND_URL || ""
+    ],
+    credentials: true
+}))
+
 app.use(express.json({ limit: "10mb" }))
 
 // Rutas públicas
@@ -40,4 +48,6 @@ app.use("/api/clientes",   verificarToken, clientesRoutes)
 
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")))
 
-app.listen(3000, () => console.log("Servidor corriendo en puerto 3000"))
+// ── Puerto dinámico para Railway ──
+const PORT = process.env.PORT || 3000
+app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`))

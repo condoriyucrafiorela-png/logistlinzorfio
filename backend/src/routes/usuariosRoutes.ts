@@ -4,7 +4,7 @@ import { verificarToken } from "../middlewares/authMiddleware.js"
 
 const router = Router()
 
-router.post("/crear", crearUsuario)
+router.post("/crear", verificarToken, crearUsuario)
 router.get("/perfil", verificarToken, obtenerPerfil)
 
 export default router
