@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import "./loginCard.css"
 import iconImg from "../../assets/images/Logo.png"
 
+import { API_URL } from "../../config/api"
+
 const LoginCard = () => {
     const [showPassword, setShowPassword] = useState(false)
     const [correo, setCorreo] = useState("")
@@ -20,7 +22,7 @@ const LoginCard = () => {
         setCargando(true)
 
         try {
-            const res = await fetch("http://localhost:3000/api/auth/login", {
+            const res = await fetch(`${API_URL}/api/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

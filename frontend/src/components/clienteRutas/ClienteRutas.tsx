@@ -5,6 +5,7 @@ import {
     faPlus, faXmark, faFloppyDisk, faPencil, faTrash
 } from "@fortawesome/free-solid-svg-icons"
 import "./ClienteRutas.css"
+import { API_URL } from "../../config/api"
 
 interface Cliente {
     id: number
@@ -35,7 +36,7 @@ const ClienteRutas = () => {
     const cargarClientes = async () => {
         setCargando(true)
         try {
-            const res = await fetch("http://localhost:3000/api/clientes", {
+            const res = await fetch(`${API_URL}/api/clientes`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
             const data = await res.json()
@@ -98,8 +99,8 @@ const ClienteRutas = () => {
         setError(null)
         try {
             const url = editando
-                ? `http://localhost:3000/api/clientes/${editando.id}`
-                : "http://localhost:3000/api/clientes"
+                ? `${API_URL}/api/clientes/${editando.id}`
+                : `${API_URL}/api/clientes`
             const method = editando ? "PUT" : "POST"
 
             const res = await fetch(url, {
@@ -129,7 +130,7 @@ const ClienteRutas = () => {
         if (!clienteEliminar) return
         setEliminando(true)
         try {
-            await fetch(`http://localhost:3000/api/clientes/${clienteEliminar.id}`, {
+            await fetch(`${API_URL}/api/clientes/${clienteEliminar.id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` }
             })

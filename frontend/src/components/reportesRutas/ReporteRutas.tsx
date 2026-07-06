@@ -4,6 +4,8 @@ import { faCalendarDays, faPencil, faCircleCheck } from "@fortawesome/free-solid
 import "./ReporteRutas.css"
 import { useRutas } from "../../context/RutasContext"
 
+import { API_URL } from "../../config/api"
+
 interface RegistroEntrega {
     id: number
     nro_guia: string
@@ -73,7 +75,7 @@ const ReporteRutas = () => {
     useEffect(() => {
         const fetchPersonal = async () => {
             try {
-                const res = await fetch("http://localhost:3000/api/personal", {
+                const res = await fetch(`${API_URL}/api/personal`, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
                 const data = await res.json()
@@ -101,7 +103,7 @@ const ReporteRutas = () => {
         setReporte(null)
         setFotosCache({})
         try {
-            const res = await fetch(`http://localhost:3000/api/entregas/reporte/${f}`, {
+            const res = await fetch(`${API_URL}/api/entregas/reporte/${f}`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
             if (res.status === 404) { setSinDatos(true); return }
@@ -117,7 +119,7 @@ const ReporteRutas = () => {
     const cargarFoto = async (id: number) => {
         if (fotosCache[id]) return
         try {
-            const res = await fetch(`http://localhost:3000/api/entregas/foto/${id}`, {
+            const res = await fetch(`${API_URL}/api/entregas/foto/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
             const data = await res.json()
@@ -184,7 +186,7 @@ const ReporteRutas = () => {
         if (!descripcionGestion.trim() || !modalGestion) return
         setGuardandoGestion(true)
         try {
-            await fetch("http://localhost:3000/api/entregas/gestion", {
+            await fetch(`${API_URL}/api/entregas/gestion`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
                 body: JSON.stringify({
@@ -233,7 +235,7 @@ const ReporteRutas = () => {
         if (!modalEstado || !nuevoEstado) return
         setGuardandoEstado(true)
         try {
-            await fetch(`http://localhost:3000/api/entregas/registro/${modalEstado.id}/estado`, {
+            await fetch(`${API_URL}/api/entregas/registro/${modalEstado.id}/estado`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ estado: nuevoEstado })
@@ -360,7 +362,7 @@ const ReporteRutas = () => {
                                             <div className="inc-field">
                                                 <span className="inc-label">Evidencia:</span>
                                                 {fotosCache[e.id]
-                                                    ? <img src={`http://localhost:3000/${fotosCache[e.id]}`} className="inc-foto" alt="evidencia" />
+                                                    ? <img src={`${API_URL}/${fotosCache[e.id]}`} className="inc-foto" alt="evidencia" />
                                                     : <button className="btn-ver-foto" onClick={() => cargarFoto(e.id)}>Ver foto</button>
                                                 }
                                             </div>

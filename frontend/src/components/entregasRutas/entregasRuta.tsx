@@ -5,6 +5,8 @@ import { useRutas } from "../../context/RutasContext"
 import { useNavigate } from "react-router-dom"
 import "./entregasRuta.css"
 
+import { API_URL } from "../../config/api"
+
 const EntregasRuta = () => {
 
     const token = localStorage.getItem("token")
@@ -42,7 +44,7 @@ const EntregasRuta = () => {
         rec?: { motivo: string; foto: string }
     ) => {
         try {
-            const res = await fetch("http://localhost:3000/api/entregas/registro", {
+            const res = await fetch(`${API_URL}/api/entregas/registro`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -95,7 +97,7 @@ const EntregasRuta = () => {
         formData.append("foto", file)
 
         try {
-            const res = await fetch("http://localhost:3000/api/entregas/subir-foto", {
+            const res = await fetch(`${API_URL}/api/entregas/subir-foto`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` },
                 body: formData  // sin Content-Type, el browser lo pone solo con boundary
@@ -262,7 +264,7 @@ const EntregasRuta = () => {
                             </button>
                             {foto && (
                                 <img
-                                    src={`http://localhost:3000/${foto}`}
+                                    src={`${API_URL}/${foto}`}
                                     className="foto-preview"
                                     alt="preview"
                                 />

@@ -3,6 +3,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faIdCard, faUsersLine, faPlus, faFloppyDisk, faPencil, faTrash } from "@fortawesome/free-solid-svg-icons"
 import "./PersonalRutas.css"
 
+import { API_URL } from "../../config/api"
+
 interface Persona {
     id: number
     nombre: string
@@ -32,7 +34,7 @@ const PersonalRutas = () => {
 
     const fetchPersonal = async () => {
         try {
-            const res = await fetch("http://localhost:3000/api/personal", {
+            const res = await fetch(`${API_URL}/api/personal`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
             const data = await res.json()
@@ -86,8 +88,8 @@ const PersonalRutas = () => {
         setError(null)
         try {
             const url = editando
-                ? `http://localhost:3000/api/personal/${editando.id}`
-                : "http://localhost:3000/api/personal"
+                ? `${API_URL}/api/personal/${editando.id}`
+                : `${API_URL}/api/personal`
             const method = editando ? "PUT" : "POST"
 
             const res = await fetch(url, {
@@ -118,7 +120,7 @@ const PersonalRutas = () => {
         if (!personaEliminar) return
         setEliminando(true)
         try {
-            await fetch(`http://localhost:3000/api/personal/${personaEliminar.id}`, {
+            await fetch(`${API_URL}/api/personal/${personaEliminar.id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` }
             })

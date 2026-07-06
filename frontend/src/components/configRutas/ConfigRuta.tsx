@@ -5,6 +5,8 @@ import { faUser, faUsers, faTruck, faFloppyDisk, faCircleCheck } from "@fortawes
 import { useRutas } from "../../context/RutasContext"
 import "./ConfigRuta.css"
 
+import { API_URL } from "../../config/api"
+
 interface Persona {
     id: number
     nombre: string
@@ -43,7 +45,7 @@ const ConfigRuta = () => {
         const fetchPersonal = async () => {
             try {
                 const token = localStorage.getItem("token")
-                const res = await fetch("http://localhost:3000/api/personal", {
+                const res = await fetch(`${API_URL}/api/personal`, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
                 const data = await res.json()

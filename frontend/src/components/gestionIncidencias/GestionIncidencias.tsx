@@ -5,6 +5,8 @@ import { faCircleExclamation, faPenToSquare, faDownload, faCalendarDays, faChevr
 import "./GestionIncidencias.css"
 import { useRutas } from "../../context/RutasContext"
 
+import { API_URL } from "../../config/api"
+
 interface Gestion {
     id: number
     empresa_cliente: string
@@ -55,10 +57,10 @@ const GestionIncidencias = () => {
         setCargando(true)
         try {
             const [resPend, resList] = await Promise.all([
-                fetch(`http://localhost:3000/api/entregas/gestion/pendientes?fecha=${f}`, {
+                fetch(`${API_URL}/api/entregas/gestion/pendientes?fecha=${f}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 }),
-                fetch(`http://localhost:3000/api/entregas/gestion/listar?fecha=${f}`, {
+                fetch(`${API_URL}/api/entregas/gestion/listar?fecha=${f}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
             ])
@@ -82,7 +84,7 @@ setGestiones(dataList.gestiones)
         new Date(f).toLocaleDateString("es-PE", { day: "numeric", month: "numeric", year: "numeric" })
 
     const handleDescargar = () => {
-        window.open(`http://localhost:3000/api/entregas/gestion/excel?fecha=${fecha}&token=${token}`, "_blank")
+        window.open(`${API_URL}/api/entregas/gestion/excel?fecha=${fecha}&token=${token}`, "_blank")
     }
 
     const claseStyle = (clase: string) => {
