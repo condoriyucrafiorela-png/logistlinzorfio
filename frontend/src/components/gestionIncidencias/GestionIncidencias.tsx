@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleExclamation, faPenToSquare, faDownload, faCalendarDays, faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons"
 import "./GestionIncidencias.css"
-import { useRutas } from "../../context/RutasContext"
 
 import { API_URL } from "../../config/api"
 
@@ -34,7 +33,6 @@ const GestionIncidencias = () => {
     const ahora = new Date()
     const limaTime = new Date(ahora.getTime() + (-5 * 60 - ahora.getTimezoneOffset()) * 60000)
     const hoy = limaTime.toISOString().split("T")[0]
-    const { configs } = useRutas()
 
     const [fecha, setFecha] = useState(hoy)
     const [pendientes, setPendientes] = useState(0)
@@ -67,10 +65,10 @@ const GestionIncidencias = () => {
             const dataPend = await resPend.json()
             const dataList = await resList.json()
             setPendientes(dataPend.total)
-setPaginaPendientes(1)
-setExpandido(false)
-setPendientesData(dataPend.pendientes)
-setGestiones(dataList.gestiones)
+            setPaginaPendientes(1)
+            setExpandido(false)
+            setPendientesData(dataPend.pendientes)
+            setGestiones(dataList.gestiones)
         } catch {
             console.error("Error al cargar datos de gestión")
         } finally {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCalendarDays, faPencil, faCircleCheck } from "@fortawesome/free-solid-svg-icons"
 import "./ReporteRutas.css"
@@ -66,9 +66,6 @@ const ReporteRutas = () => {
 
     // Autocompletado chofer
     const [personal, setPersonal] = useState<Persona[]>([])
-    const [sugerenciasChofer, setSugerenciasChofer] = useState<string[]>([])
-    const [mostrarSugChofer, setMostrarSugChofer] = useState(false)
-    const choferRef = useRef<HTMLDivElement>(null)
 
     const token = localStorage.getItem("token")
 
@@ -85,16 +82,6 @@ const ReporteRutas = () => {
             }
         }
         fetchPersonal()
-    }, [])
-
-    useEffect(() => {
-        const handleClickFuera = (e: MouseEvent) => {
-            if (choferRef.current && !choferRef.current.contains(e.target as Node)) {
-                setMostrarSugChofer(false)
-            }
-        }
-        document.addEventListener("mousedown", handleClickFuera)
-        return () => document.removeEventListener("mousedown", handleClickFuera)
     }, [])
 
     const fetchReporte = async (f: string) => {
@@ -142,37 +129,12 @@ const ReporteRutas = () => {
             day: "2-digit", month: "2-digit", year: "numeric"
         })
 
-    // ── Autocompletado chofer ──
-    const obtenerCoincidenciasChofer = (texto: string): string[] => {
-        if (!texto.trim()) return []
-        const t = texto.toLowerCase().trim()
-        const resultados = new Set<string>()
-        personal.forEach(p => {
-            const completo = `${p.nombre} ${p.apellido}`
-            if (completo.toLowerCase().includes(t)) resultados.add(completo)
-        })
-        return [...resultados].slice(0, 6)
-    }
-
-    const handleChoferChange = (valor: string) => {
-        setChofer(valor)
-        setSugerenciasChofer(obtenerCoincidenciasChofer(valor))
-        setMostrarSugChofer(true)
-    }
-
-    const seleccionarChofer = (nombre: string) => {
-        setChofer(nombre)
-        setMostrarSugChofer(false)
-    }
-
     const abrirGestion = (e: RegistroEntrega) => {
         setModalGestion(e)
         setTipoGestion("Reprogramar")
         setDescripcionGestion("")
         const conductorReporte = configs[e.reporte]?.conductor ?? ""
         setChofer(conductorReporte)
-        setSugerenciasChofer([])
-        setMostrarSugChofer(false)
         setMostrarConfirmacion(false)
     }
 
