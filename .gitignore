@@ -1,0 +1,43 @@
+# Dependencias
+node_modules/
+
+# Build
+dist/
+build/
+
+# Variables de entorno
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Vite
+*.local
+
+# Editor
+.vscode/
+.idea/
+
+# TypeScript
+*.tsbuildinfo
+
+# Carpetas generadas por CLIs de deploy
+.vercel
+.railway
+
+# Backups de BD (por si generas dumps locales de pgAdmin)
+*.sql
+*.dump
+*.backup
+
+# Archivos subidos localmente antes de migrar a Cloudinary (si tienes carpeta local de uploads)
+backend/uploads/
+uploads/

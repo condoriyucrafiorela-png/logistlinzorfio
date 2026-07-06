@@ -1,0 +1,30 @@
+.logist-page {
+    display: flex;
+    height: 100%;
+    background-color: var(--color-dark);
+}
+
+.logist-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Contenedor de contenido — aplica a todas las secciones */
+.logist-content-area {
+    width: 100%;
+    flex: 1;
+    background-color: var(--color-white);
+    padding: 1.35rem 1.75rem;
+    overflow-y: auto;
+}
+
+.logist-content-area::-webkit-scrollbar {
+    width: 6px;
+    background-color: var(--color-border-gray);
+}
+
+.logist-content-area::-webkit-scrollbar-thumb {
+    background-color: var(--color-red-focus);
+}

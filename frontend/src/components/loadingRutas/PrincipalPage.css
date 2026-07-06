@@ -1,0 +1,297 @@
+/* ── Header ── */
+.content {
+    display: block;
+    margin: 20px;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.content h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: .4px;
+    margin-bottom: 1rem;
+}
+
+/* ── Card de carga ── */
+.content-card {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-top: 1rem;
+    max-width: 680px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+.content-excel {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+
+.excel-icon {
+    font-size: 1.8rem;
+    color: #e53e3e;
+}
+
+.content-title h2 {
+    font-size: .95rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.content-title h3 {
+    font-size: .78rem;
+    color: #6b7280;
+    font-weight: 400;
+    margin: 0;
+}
+
+/* ── Botones ── */
+.content-buttons {
+    display: flex;
+    gap: .6rem;
+    flex-wrap: wrap;
+}
+
+.btn-excel, .btn-demo, .btn-limpiar {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .5rem .9rem;
+    border-radius: 7px;
+    font-size: .8rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: opacity .2s;
+}
+
+.btn-excel {
+    background-color: #e53e3e;
+    color: #fff;
+}
+
+.btn-demo {
+    background-color: #111827;
+    color: #ffffff;
+    border: 1px solid #d1d5db;
+}
+
+.btn-limpiar {
+    background-color: transparent;
+    color: #6b7280;
+    border: 1px solid #d1d5db;
+}
+
+.btn-excel:hover, .btn-demo:hover, .btn-limpiar:hover {
+    opacity: .8;
+}
+
+/* ── Estado archivo ── */
+.archivo-ok {
+    font-size: .78rem;
+    color: #16a34a;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 0;
+}
+
+.archivo-error {
+    font-size: .78rem;
+    color: #e53e3e;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 0;
+}
+
+/* ── Tabla ── */
+.content-table-wrap {
+    margin-top: 1.5rem;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.total-pedidos {
+    font-size: .82rem;
+    color: #6b7280;
+    margin-bottom: .6rem;
+}
+
+.total-pedidos strong {
+    color: #111827;
+}
+
+.table-scroll {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    width: 100%;
+}
+
+.ruta-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .78rem;
+    white-space: nowrap;
+    background-color: #ffffff;
+}
+
+.ruta-table thead tr {
+    background-color: #f9fafb;
+}
+
+.ruta-table th {
+    padding: .6rem .85rem;
+    text-align: left;
+    color: #6b7280;
+    font-weight: 600;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.ruta-table td {
+    padding: .55rem .85rem;
+    color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.ruta-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.ruta-table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+/* ── Scrollbar visible en la tabla ── */
+.table-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.table-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb {
+    background: var(--color-moreskyred);
+    border-radius: 3px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--color-skyred);
+}
+
+/*--------------------------*/
+/* ── Columna del check ── */
+/*--------------------------*/
+
+.th-check, .td-check {
+    width: 32px;
+    min-width: 32px;
+    padding: 0 4px 0 8px !important;
+}
+
+/* Ícono oculto por defecto, aparece al hover de la fila */
+.btn-check {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    color: #a1a8b2;
+    font-size: .85rem;
+    opacity: 0;
+    transition: opacity .15s, color .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Aparece al hacer hover sobre la fila */
+.fila-ruta:hover .btn-check {
+    opacity: 1;
+}
+
+/* Si ya está marcada, el ícono siempre visible y verde */
+.btn-check.checked {
+    opacity: 1 !important;
+    color: var(--color-approved);
+}
+
+.btn-check:hover {
+    color: var(--color-approved);
+}
+
+.btn-check.checked:hover {
+    color: #dc2626;   /* rojo al hacer hover para indicar que se puede desmarcar */
+}
+
+/* Fila revisada — atenuada con tachado */
+.fila-revisada td {
+    color: #9ca3af !important;
+    text-decoration: line-through;
+    text-decoration-color: #d1d5db;
+    background-color: #fafafa;
+}
+
+/* El número de orden no se tacha */
+.fila-revisada td:nth-child(2) {
+    text-decoration: none;
+    font-weight: 600;
+    color: #d1d5db !important;
+}
+
+
+
+.confirmar-rutas-wrap {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.btn-confirmar {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .6rem 1.2rem;
+    background-color: #111827;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .2s;
+}
+
+.btn-confirmar:hover {
+    opacity: .85;
+}
+
+
+
+.celda-vacia {
+    display: inline-block;
+    font-size: .68rem;
+    font-weight: 600;
+    color: #dc2626;
+    background-color: #fee2e2;
+    border: 1px solid #fca5a5;
+    padding: 1px 6px;
+    border-radius: 4px;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+}

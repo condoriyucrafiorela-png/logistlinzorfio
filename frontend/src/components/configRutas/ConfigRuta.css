@@ -1,0 +1,247 @@
+/* Layout de dos paneles */
+.config-layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    align-items: start;
+}
+
+/* Panel izquierdo */
+.config-form-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+.config-form-card h2,
+.config-reportes-card h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 1.1rem 0;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.badge-configurados {
+    font-size: .7rem;
+    background-color: #dcfce7;
+    color: #16a34a;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-weight: 600;
+}
+
+/* Grupos del formulario */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    margin-bottom: .9rem;
+}
+
+.form-group label {
+    font-size: .78rem;
+    font-weight: 600;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+.form-group label svg {
+    color: #6b7280;
+    font-size: .75rem;
+}
+
+.form-group select,
+.form-group input {
+    padding: .5rem .75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    font-size: .82rem;
+    color: #111827;
+    background-color: #f9fafb;
+    outline: none;
+    transition: border-color .15s;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+    border-color: #e53e3e;
+    background-color: #fff;
+}
+
+.form-group select.select-activo {
+    border-color: #e53e3e;
+    background-color: #fff;
+}
+
+/* Botón guardar */
+.btn-guardar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    padding: .6rem;
+    margin-top: .4rem;
+    background-color: #374151;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color .2s;
+}
+
+.btn-guardar:hover:not(:disabled) {
+    background-color: #111827;
+}
+
+.btn-guardar:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+/* Panel derecho */
+.config-reportes-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+.config-empty {
+    font-size: .82rem;
+    color: #9ca3af;
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.reportes-list {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+}
+
+/* Card de cada reporte */
+.reporte-card {
+    padding: .75rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color .15s, background-color .15s;
+}
+
+.reporte-card:hover {
+    border-color: #d1d5db;
+    background-color: #f9fafb;
+}
+
+.reporte-card.configurado {
+    border-color: #86efac;
+    background-color: #f0fdf4;
+}
+
+.reporte-card.configurado:hover {
+    border-color: #4ade80;
+}
+
+.reporte-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.reporte-nombre {
+    font-size: .85rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.icon-check {
+    color: #16a34a;
+    font-size: .95rem;
+}
+
+.reporte-card-datos {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    margin-top: .5rem;
+}
+
+.reporte-card-datos span {
+    font-size: .75rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+.reporte-card-datos svg {
+    color: #9ca3af;
+    font-size: .7rem;
+}
+
+
+
+.btn-continuar {
+    width: 100%;
+    margin-top: 1rem;
+    padding: .7rem;
+    background-color: #16a34a;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: .88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color .2s;
+    letter-spacing: .3px;
+}
+
+.btn-continuar:hover {
+    background-color: #15803d;
+}
+
+.autocomplete-wrap {
+    position: relative;
+}
+
+.autocomplete-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e53e3e;
+    border-radius: 7px;
+    box-shadow: 0 4px 12px rgba(229,62,62,.15);
+    list-style: none;
+    margin: 0;
+    padding: .25rem 0;
+    max-height: 180px;
+    overflow-y: auto;
+    z-index: 50;
+}
+
+.autocomplete-list li {
+    padding: .5rem .75rem;
+    font-size: .82rem;
+    color: #374151;
+    cursor: pointer;
+    transition: background .12s;
+}
+
+.autocomplete-list li:hover {
+    background: #fef2f2;
+    color: #e53e3e;
+}

@@ -1,0 +1,49 @@
+
+/* =====================
+    FONTS IMPORTADAS
+===================== */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+/* =====================
+        COLORES
+===================== */
+:root {
+    --color-white: #ffffff;
+    --color-dark: #000000;
+    --color-moreskyred: #f7d0d0;
+    --color-skyred: #ec8484;
+    --color-red: #e40000;
+    --color-red-focus: #c31313;
+    --red-dim: #d628281f;
+
+    --color-approved: #49c045;
+
+    --color-purple: #d55fef;
+    --color-purple-focus: #c846dc;
+    --red-dim: #aa28d61f;
+
+    --color-darker: #141416;
+
+    --color-gray: #d0d0d0;
+    --color-dark-gray: #898989;
+    --color-darker-gray: #575757;
+    --color-very-dark-gray: #3e3e3e;
+
+    --color-link-notFocused: #6c6c6c;
+    --color-hover-perfil: #605b5b31;
+    --color-border-gray: #2c2c2c;
+
+    --color-bell-notificacion: #ffb300;
+
+    --color-transparent: rgba(255, 255, 255, 0.653);
+}
+
+/* =====================
+        TIPOGRAFÍA
+===================== */    
+:root {
+    --font-mono: 'sans-serif', monospace;
+    --font-bebasNeue: 'Bebas Neue', sans-serif;
+
+    
+}
