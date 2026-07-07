@@ -1,8 +1,6 @@
 import { Router } from "express"
-import type { StorageEngine, FileFilterCallback } from "multer"
+import type { FileFilterCallback } from "multer"
 import multer from "multer"
-import path from "path"
-import fs from "fs"
 
 import { verificarToken } from "../middlewares/authMiddleware.js"
 import {
@@ -12,20 +10,9 @@ import {
     getPendientesGestion, getGestiones, descargarGestionesExcel
 } from "../controllers/entregasController.js"
 
-const dirEvidencias = path.join(process.cwd(), "uploads", "evidencias")
-if (!fs.existsSync(dirEvidencias)) fs.mkdirSync(dirEvidencias, { recursive: true })
-
-const storage: StorageEngine = multer.diskStorage({
-    destination(_req, _file, cb) { cb(null, dirEvidencias) },
-    filename(_req, file, cb) {
-        const ext    = path.extname(file.originalname)
-        const nombre = `evidencia_${Date.now()}${ext}`
-        cb(null, nombre)
-    }
-})
-
+// ── Multer con memoria: el archivo llega como buffer, Cloudinary lo sube directo ──
 const upload = multer({
-    storage,
+    storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter(_req, file: Express.Multer.File, cb: FileFilterCallback) {
         /jpeg|jpg|png|webp/.test(file.mimetype)

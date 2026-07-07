@@ -1,5 +1,7 @@
 import type { Request, Response } from "express"
 import * as entregasService from "../services/entregasService.js"
+import cloudinary from "../config/cloudinary.js"
+import streamifier from "streamifier"
 
 // ── Helpers de validación ──────────────────────────────────
 const esFechaValida = (fecha: string) => /^\d{4}-\d{2}-\d{2}$/.test(fecha)
@@ -25,7 +27,6 @@ export const guardarEntregas = async (req: Request, res: Response) => {
             return res.status(400).json({ mensaje: "Formato de entregas inválido." })
         }
 
-        // Fecha en zona horaria de Lima (UTC-5)
         const ahora = new Date()
         const limaOffset = -5 * 60
         const limaTime = new Date(ahora.getTime() + (limaOffset - ahora.getTimezoneOffset()) * 60000)
@@ -122,11 +123,27 @@ export const subirFotoEvidencia = async (req: Request, res: Response) => {
         if (!file) {
             return res.status(400).json({ mensaje: "No se recibió ningún archivo." })
         }
-        const ruta = `uploads/evidencias/${file.filename}`
-        res.status(201).json({ ruta })
+
+        const resultado = await new Promise<any>((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+                {
+                    folder: "logistlinzor/evidencias",
+                    public_id: `evidencia_${Date.now()}`,
+                    resource_type: "image"
+                },
+                (error, result) => {
+                    if (error) reject(error)
+                    else resolve(result)
+                }
+            )
+            streamifier.createReadStream(file.buffer).pipe(stream)
+        })
+
+        res.status(201).json({ ruta: resultado.secure_url })
+
     } catch (error) {
         console.error("ERROR subirFotoEvidencia:", error)
-        res.status(500).json({ mensaje: "Error del servidor." })
+        res.status(500).json({ mensaje: "Error al subir la imagen." })
     }
 }
 

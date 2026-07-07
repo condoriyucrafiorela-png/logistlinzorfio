@@ -299,7 +299,7 @@ const ReporteRutas = () => {
                                             <div className="inc-field">
                                                 <span className="inc-label">Evidencia:</span>
                                                 {fotosCache[e.id]
-                                                    ? <img src={`${API_URL}/${fotosCache[e.id]}`} className="inc-foto" alt="evidencia" />
+                                                    ? <img src={fotosCache[e.id]} className="inc-foto" alt="evidencia" />
                                                     : <button className="btn-ver-foto" onClick={() => cargarFoto(e.id)}>Ver foto</button>
                                                 }
                                             </div>

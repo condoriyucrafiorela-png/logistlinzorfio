@@ -264,7 +264,7 @@ const EntregasRuta = () => {
                             </button>
                             {foto && (
                                 <img
-                                    src={`${API_URL}/${foto}`}
+                                    src={foto}
                                     className="foto-preview"
                                     alt="preview"
                                 />
