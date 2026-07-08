@@ -24,14 +24,22 @@
     font-weight: 600;
 }
 
-/* Filtro fecha */
+/* Filtro fecha y acciones superiores */
 .report-body { margin-top: .5rem; }
+
+.report-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
 
 .report-fecha {
     display: flex;
     align-items: center;
     gap: .6rem;
-    margin-bottom: 1.25rem;
     font-size: .85rem;
     font-weight: 500;
     color: #374151;
@@ -46,6 +54,32 @@
     font-size: .82rem;
     color: #111827;
     outline: none;
+}
+
+/* Botón interactivo para reiniciar procesos cargados */
+.btn-reiniciar-proceso {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .45rem .95rem;
+    border-radius: 7px;
+    border: 1px solid #dc2626;
+    background: #dc2626;
+    color: #ffffff;
+    font-size: .82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, opacity .15s;
+}
+
+.btn-reiniciar-proceso:hover:not(:disabled) {
+    background: #b91c1c;
+    border-color: #b91c1c;
+}
+
+.btn-reiniciar-proceso:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 /* Estado carga */
@@ -202,8 +236,6 @@
 .btn-editar.azul { background: #2563eb; }
 .btn-editar:hover { opacity: .8; }
 
-
-
 .btn-ver-foto {
     padding: .3rem .7rem;
     font-size: .75rem;
@@ -219,10 +251,18 @@
 
 .btn-ver-foto:hover { background: #fee2e2; }
 
-.modal-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: .75rem;
+/* Modales y Capas de superposición */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
 }
 
 .modal-card {
@@ -230,7 +270,7 @@
     border-radius: 12px;
     padding: 1.5rem;
     width: 100%;
-    max-width: 580px;        /* ← era 380px */
+    max-width: 580px;
     box-shadow: 0 8px 30px rgba(0,0,0,.15);
 }
 
@@ -297,7 +337,7 @@
 /* Grid del modal — columnas equilibradas */
 .modal-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;   /* ← cliente más ancho que vale */
+    grid-template-columns: 2fr 1fr;
     gap: .75rem;
     margin-bottom: .9rem;
 }
@@ -314,6 +354,50 @@
     font-size: .78rem;
     font-weight: 600;
     color: #374151;
+}
+
+/* Botones de control de los modales */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+    margin-top: 1rem;
+}
+
+.btn-modal-guardar, .btn-modal-ok {
+    padding: .5rem 1.1rem;
+    border-radius: 7px;
+    border: none;
+    color: #ffffff;
+    font-size: .82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s;
+}
+
+.btn-modal-guardar:hover, .btn-modal-ok:hover {
+    opacity: 0.9;
+}
+
+.btn-modal-guardar:disabled, .btn-modal-ok:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-modal-cancelar {
+    padding: .5rem 1.1rem;
+    border-radius: 7px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #374151;
+    font-size: .82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+}
+
+.btn-modal-cancelar:hover {
+    background: #f9fafb;
 }
 
 .autocomplete-wrap {
@@ -381,3 +465,27 @@
     flex-direction: column;
     gap: .15rem;
 }
+
+.report-botones-derecha {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+.btn-ir-incidencias {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem 1rem;
+    background: #f97316;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: .82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s;
+}
+
+.btn-ir-incidencias:hover { opacity: .85; }

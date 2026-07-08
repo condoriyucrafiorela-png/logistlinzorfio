@@ -10,7 +10,6 @@ export const existeSesion = async (fecha: string): Promise<boolean> => {
 }
 
 export const obtenerOCrearSesion = async (usuarioId: number): Promise<number> => {
-    // Fecha en zona horaria de Lima (UTC-5)
     const ahora = new Date()
     const limaOffset = -5 * 60
     const limaTime = new Date(ahora.getTime() + (limaOffset - ahora.getTimezoneOffset()) * 60000)
@@ -28,7 +27,7 @@ export const obtenerOCrearSesion = async (usuarioId: number): Promise<number> =>
     return nueva.rows[0].id
 }
 
-// ── Guardar en lote (endpoint legado) ─────────────────────
+// ── Guardar en lote (Importación desde Excel) ─────────────
 
 export const guardarSesion = async (
     fecha: string,
@@ -48,12 +47,21 @@ export const guardarSesion = async (
         for (const e of entregas) {
             await client.query(
                 `INSERT INTO registros_entrega
-                 (sesion_id, nro_guia, nro_pedido, razon_social, reporte, placa,
+                 (sesion_id, nro_guia, nro_pedido, nro_vale, razon_social, reporte, placa,
                   estado, motivo_rechazo, foto_rechazo)
-                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-                [sesionId, e.nroGuia, e.nroPedido, e.razonSocial,
-                    e.reporte, e.placa, e.estado,
-                    e.motivoRechazo ?? null, e.fotoRechazo ?? null]
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                [
+                    sesionId, 
+                    e.nroGuia, 
+                    e.nroPedido, 
+                    e.nroVale, 
+                    e.razonSocial,
+                    e.reporte, 
+                    e.placa, 
+                    e.estado,
+                    e.motivoRechazo ?? null, 
+                    e.fotoRechazo ?? null
+                ]
             )
         }
 
@@ -67,22 +75,31 @@ export const guardarSesion = async (
     }
 }
 
-// ── Guardar registro individual (tiempo real) ─────────────
+// ── Guardar registro individual (Tiempo Real) ─────────────
 
 export const upsertRegistro = async (sesionId: number, entrega: any) => {
     await pool.query(
         `INSERT INTO registros_entrega
-         (sesion_id, nro_guia, nro_pedido, razon_social, reporte, placa,
+         (sesion_id, nro_guia, nro_pedido, nro_vale, razon_social, reporte, placa,
           estado, motivo_rechazo, foto_rechazo)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          ON CONFLICT (sesion_id, nro_guia)
          DO UPDATE SET
-             estado        = EXCLUDED.estado,
+             estado         = EXCLUDED.estado,
              motivo_rechazo = EXCLUDED.motivo_rechazo,
-             foto_rechazo  = EXCLUDED.foto_rechazo`,
-        [sesionId, entrega.nroGuia, entrega.nroPedido, entrega.razonSocial,
-            entrega.reporte, entrega.placa, entrega.estado,
-            entrega.motivoRechazo ?? null, entrega.fotoRechazo ?? null]
+             foto_rechazo   = EXCLUDED.foto_rechazo`,
+        [
+            sesionId, 
+            entrega.nroGuia, 
+            entrega.nroPedido, 
+            entrega.nroVale ?? null, 
+            entrega.razonSocial,
+            entrega.reporte, 
+            entrega.placa, 
+            entrega.estado,
+            entrega.motivoRechazo ?? null, 
+            entrega.fotoRechazo ?? null
+        ]
     )
 }
 
@@ -104,7 +121,7 @@ export const obtenerReporte = async (fecha: string) => {
     const sesionId = sesion.rows[0].id
 
     const registros = await pool.query(
-        `SELECT re.id, re.sesion_id, re.nro_guia, re.nro_pedido, re.razon_social,
+        `SELECT re.id, re.sesion_id, re.nro_guia, re.nro_pedido, re.nro_vale, re.razon_social,
                 re.reporte, re.placa, re.estado, re.motivo_rechazo,
                 (gi.id IS NOT NULL) AS gestionado,
                 gi.tipo_gestion,
@@ -117,12 +134,12 @@ export const obtenerReporte = async (fecha: string) => {
         [sesionId]
     )
 
-    const entregas = registros.rows
+    const entregas = registros.rows || []
     return {
         fecha,
         total:          entregas.length,
-        conformes:      entregas.filter((e: any) => e.estado === "conforme").length,
-        no_despachados: entregas.filter((e: any) => e.estado === "no_despachado").length,
+        conformes:      entregas.filter((e: any) => e?.estado === "conforme").length,
+        no_despachados: entregas.filter((e: any) => e?.estado === "no_despachado").length,
         entregas
     }
 }
@@ -134,7 +151,6 @@ export const obtenerFoto = async (id: string) => {
     return r.rows[0] ?? null
 }
 
-// Actualizar estado de un registro
 export const actualizarEstado = async (id: string, estado: string) => {
     await pool.query(
         "UPDATE registros_entrega SET estado = $1 WHERE id = $2",
@@ -142,19 +158,22 @@ export const actualizarEstado = async (id: string, estado: string) => {
     )
 }
 
-// Guardar gestión de incidencia
-// En guardarGestion del service, agrega chofer al INSERT:
 export const guardarGestion = async (gestion: any) => {
     await pool.query(
         `INSERT INTO gestiones_incidencia
          (registro_id, empresa_cliente, nro_vale, tipo_gestion, descripcion, chofer)
          VALUES ($1, $2, $3, $4, $5, $6)`,
-        [gestion.registroId, gestion.empresaCliente,
-         gestion.nroVale, gestion.tipoGestion, gestion.descripcion, gestion.chofer ?? null]
+        [
+            gestion.registroId, 
+            gestion.empresaCliente,
+            gestion.nroVale, 
+            gestion.tipoGestion, 
+            gestion.descripcion, 
+            gestion.chofer ?? null
+        ]
     )
 }
 
-// Incidencias no_despachado sin gestión todavía
 export const contarPendientesGestion = async (fecha: string) => {
     const r = await pool.query(`
         SELECT COUNT(*) AS total
@@ -166,13 +185,19 @@ export const contarPendientesGestion = async (fecha: string) => {
     return parseInt(r.rows[0].total)
 }
 
-// Lista de gestiones (con datos del registro asociado)
 export const listarGestiones = async (fecha: string) => {
     const r = await pool.query(`
         SELECT
-            gi.id, gi.empresa_cliente, gi.nro_vale, gi.tipo_gestion,
-            gi.descripcion, gi.chofer, gi.creado_en,
-            re.nro_pedido, re.nro_guia, re.motivo_rechazo,
+            gi.id, 
+            gi.empresa_cliente, 
+            gi.nro_vale AS nro_vale,       
+            gi.tipo_gestion,
+            gi.descripcion, 
+            gi.chofer, 
+            gi.creado_en,
+            re.nro_pedido AS nro_pedido,   
+            re.nro_guia, 
+            re.motivo_rechazo,
             sd.fecha
         FROM gestiones_incidencia gi
         JOIN registros_entrega re ON re.id = gi.registro_id
@@ -180,7 +205,7 @@ export const listarGestiones = async (fecha: string) => {
         WHERE sd.fecha = $1
         ORDER BY gi.creado_en DESC
     `, [fecha])
-    return r.rows
+    return r.rows || []
 }
 
 export const listarPendientesGestion = async (fecha: string) => {
@@ -194,6 +219,57 @@ export const listarPendientesGestion = async (fecha: string) => {
         ORDER BY re.id
     `, [fecha])
     return r.rows
+}
+
+export const eliminarProcesoCompleto = async (fecha: string): Promise<void> => {
+    const client = await pool.connect()
+    try {
+        await client.query("BEGIN")
+
+        const sesionRes = await client.query(
+            "SELECT id FROM sesiones_diarias WHERE fecha = $1", [fecha]
+        )
+
+        if (sesionRes.rows.length > 0) {
+            const sesionId = sesionRes.rows[0].id
+
+            await client.query(
+                `DELETE FROM gestiones_incidencia 
+                 WHERE registro_id IN (SELECT id FROM registros_entrega WHERE sesion_id = $1)`,
+                [sesionId]
+            )
+
+            await client.query(
+                "DELETE FROM registros_entrega WHERE sesion_id = $1",
+                [sesionId]
+            )
+
+            await client.query(
+                "DELETE FROM sesiones_diarias WHERE id = $1",
+                [sesionId]
+            )
+        }
+
+        await client.query("COMMIT")
+    } catch (err) {
+        await client.query("ROLLBACK")
+        throw err
+    } finally {
+        client.release()
+    }
+}
+
+export const obtenerOCrearSesionConFecha = async (usuarioId: number, fecha: string): Promise<number> => {
+    const existe = await pool.query(
+        "SELECT id FROM sesiones_diarias WHERE fecha = $1", [fecha]
+    )
+    if (existe.rows.length > 0) return existe.rows[0].id
+
+    const nueva = await pool.query(
+        "INSERT INTO sesiones_diarias (fecha, usuario_id) VALUES ($1, $2) RETURNING id",
+        [fecha, usuarioId]
+    )
+    return nueva.rows[0].id
 }
 
 export const listarGestionesParaExcel = async (fecha: string) => listarGestiones(fecha)

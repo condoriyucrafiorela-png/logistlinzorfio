@@ -295,3 +295,29 @@
     letter-spacing: .3px;
     text-transform: uppercase;
 }
+
+.cargar-fecha {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin-bottom: 1rem;
+    font-size: .85rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.cargar-fecha .fecha-icon { color: #6b7280; }
+
+.cargar-fecha input[type="date"] {
+    padding: .4rem .75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    font-size: .82rem;
+    color: #111827;
+    outline: none;
+    transition: border-color .15s;
+}
+
+.cargar-fecha input[type="date"]:focus {
+    border-color: #e53e3e;
+}

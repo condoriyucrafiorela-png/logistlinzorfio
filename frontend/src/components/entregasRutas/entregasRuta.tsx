@@ -10,7 +10,7 @@ import { API_URL } from "../../config/api"
 const EntregasRuta = () => {
 
     const token = localStorage.getItem("token")
-    const { filasConfirmadas, configs, estados, setEstados, rechazos, setRechazos } = useRutas()
+    const { filasConfirmadas, configs, estados, setEstados, rechazos, setRechazos, fechaProceso } = useRutas()
     const navigate = useNavigate()
 
     const filas = filasConfirmadas.filter(
@@ -53,12 +53,14 @@ const EntregasRuta = () => {
                 body: JSON.stringify({
                     nroGuia: fila.nroGuia,
                     nroPedido: fila.nroPedido,
+                    nroVale: fila.nroVale,       // <-- ¡AQUÍ SE ADICIONA! Jala el vale corto del Excel
                     razonSocial: fila.razonSocial,
                     reporte: fila.reporte,
                     placa: configs[fila.reporte]?.placa ?? "",
                     estado: estadoFinal,
                     motivoRechazo: rec?.motivo ?? null,
                     fotoRechazo: rec?.foto ?? null,
+                    fechaProceso
                 })
             })
             const data = await res.json()
@@ -75,7 +77,7 @@ const EntregasRuta = () => {
             const k = claveEntrega(i)
             return !nuevosEstados[k] || nuevosEstados[k] === "pendiente"
         })
-        if (!quedanPendientes) navigate("/gestion/reportes")
+        if (!quedanPendientes) navigate(`/gestion/reportes?fecha=${fechaProceso}`)
     }
 
     const handleConfirmar = async (clave: string) => {

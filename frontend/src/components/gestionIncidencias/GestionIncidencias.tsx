@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { useSearchParams } from "react-router-dom"
 import { faCircleExclamation, faPenToSquare, faDownload, faCalendarDays, faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons"
 import "./GestionIncidencias.css"
 
@@ -34,7 +35,9 @@ const GestionIncidencias = () => {
     const limaTime = new Date(ahora.getTime() + (-5 * 60 - ahora.getTimezoneOffset()) * 60000)
     const hoy = limaTime.toISOString().split("T")[0]
 
-    const [fecha, setFecha] = useState(hoy)
+    const [searchParams] = useSearchParams()
+
+    const [fecha, setFecha] = useState(searchParams.get("fecha") ?? hoy)
     const [pendientes, setPendientes] = useState(0)
     const [pendientesData, setPendientesData] = useState<Pendiente[]>([])
     const [gestiones, setGestiones] = useState<Gestion[]>([])
@@ -76,7 +79,10 @@ const GestionIncidencias = () => {
         }
     }
 
-    useEffect(() => { cargarDatos(fecha) }, [fecha])
+    useEffect(() => {
+        const fechaParam = searchParams.get("fecha")
+        if (fechaParam) setFecha(fechaParam)
+    }, [searchParams])
 
     const formatFecha = (f: string) =>
         new Date(f).toLocaleDateString("es-PE", { day: "numeric", month: "numeric", year: "numeric" })
@@ -212,7 +218,7 @@ const GestionIncidencias = () => {
                         <span>Incidencias Gestionadas</span>
                     </div>
                     <div className="gi-header-right">
-                        <span className="gi-badge verde">{gestiones.length}</span>
+                        <span className="gi-badge verde">{gestiones?.length || 0}</span>
                         <button className="btn-descargar" onClick={handleDescargar} disabled={gestiones.length === 0}>
                             <FontAwesomeIcon icon={faDownload} /> Descargar Incidencias
                         </button>
@@ -227,10 +233,10 @@ const GestionIncidencias = () => {
                                 <thead>
                                     <tr>
                                         <th>Fecha de Creación</th>
-                                        <th>En relación con</th>
-                                        <th>N Vale</th>
+                                        <th>Razón Social</th>
+                                        <th>NRO Vale</th>
                                         <th>NRO Pedido</th>
-                                        <th>Número de Guías</th>
+                                        <th>NRO Guías</th>
                                         <th>Clase</th>
                                         <th>Descripción</th>
                                         <th>Chofer</th>

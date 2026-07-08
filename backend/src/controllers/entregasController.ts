@@ -84,13 +84,21 @@ export const getReportePorFecha = async (req: Request, res: Response) => {
 export const guardarRegistro = async (req: Request, res: Response) => {
     try {
         const usuarioId = (req as any).usuario?.id
-        const entrega   = req.body
+        const entrega = req.body
 
         if (!entrega || typeof entrega !== "object") {
             return res.status(400).json({ mensaje: "Datos de entrega inválidos." })
         }
 
-        const sesionId = await entregasService.obtenerOCrearSesion(usuarioId)
+        // Usa fechaProceso si viene, si no usa hoy Lima
+        const fechaParam = entrega.fechaProceso
+        const ahora = new Date()
+        const limaTime = new Date(ahora.getTime() + (-5 * 60 - ahora.getTimezoneOffset()) * 60000)
+        const fechaUsar = (fechaParam && esFechaValida(fechaParam))
+            ? fechaParam
+            : limaTime.toISOString().split("T")[0]
+
+        const sesionId = await entregasService.obtenerOCrearSesionConFecha(usuarioId, fechaUsar)
         await entregasService.upsertRegistro(sesionId, entrega)
 
         res.status(200).json({ mensaje: "Registro guardado." })
@@ -244,28 +252,28 @@ export const descargarGestionesExcel = async (req: Request, res: Response) => {
         const sheet = workbook.addWorksheet("Incidencias")
 
         sheet.columns = [
-            { header: "Fecha de Creación",  key: "fecha",           width: 16 },
-            { header: "En relación con",    key: "empresa_cliente", width: 28 },
-            { header: "N Vale",             key: "nro_vale",        width: 12 },
-            { header: "NRO Pedido",         key: "nro_pedido",      width: 12 },
-            { header: "Número de Guías",    key: "nro_guia",        width: 14 },
-            { header: "Clase",              key: "tipo_gestion",    width: 18 },
-            { header: "Descripción",        key: "descripcion",     width: 35 },
-            { header: "Chofer",             key: "motivo_rechazo",  width: 12 },
+            { header: "Fecha de Creación", key: "fecha", width: 16 },
+            { header: "En relación con", key: "empresa_cliente", width: 28 },
+            { header: "N Vale", key: "nro_vale", width: 12 },
+            { header: "NRO Pedido", key: "nro_pedido", width: 12 },
+            { header: "Número de Guías", key: "nro_guia", width: 14 },
+            { header: "Clase", key: "tipo_gestion", width: 18 },
+            { header: "Descripción", key: "descripcion", width: 35 },
+            { header: "Chofer", key: "motivo_rechazo", width: 12 },
         ]
 
         sheet.getRow(1).font = { bold: true }
 
         gestiones.forEach((g: any) => {
             sheet.addRow({
-                fecha:           new Date(g.fecha).toLocaleDateString("es-PE"),
+                fecha: new Date(g.fecha).toLocaleDateString("es-PE"),
                 empresa_cliente: sanitizarCeldaExcel(g.empresa_cliente),
-                nro_vale:        sanitizarCeldaExcel(g.nro_vale),
-                nro_pedido:      sanitizarCeldaExcel(g.nro_pedido),
-                nro_guia:        sanitizarCeldaExcel(g.nro_guia),
-                tipo_gestion:    sanitizarCeldaExcel(g.tipo_gestion),
-                descripcion:     sanitizarCeldaExcel(g.descripcion),
-                motivo_rechazo:  sanitizarCeldaExcel(g.motivo_rechazo ?? "—"),
+                nro_vale: sanitizarCeldaExcel(g.nro_vale),
+                nro_pedido: sanitizarCeldaExcel(g.nro_pedido),
+                nro_guia: sanitizarCeldaExcel(g.nro_guia),
+                tipo_gestion: sanitizarCeldaExcel(g.tipo_gestion),
+                descripcion: sanitizarCeldaExcel(g.descripcion),
+                motivo_rechazo: sanitizarCeldaExcel(g.motivo_rechazo ?? "—"),
             })
         })
 
@@ -277,5 +285,30 @@ export const descargarGestionesExcel = async (req: Request, res: Response) => {
     } catch (error) {
         console.error("ERROR descargarGestionesExcel:", error)
         res.status(500).json({ mensaje: "Error del servidor." })
+    }
+}
+
+export const reiniciarProcesoPorFecha = async (req: Request, res: Response) => {
+    try {
+        // Forzamos que sea tratado estrictamente como string para solucionar los errores de tipado
+        const fecha = req.params.fecha as string
+
+        if (!fecha || !esFechaValida(fecha)) {
+            return res.status(400).json({ mensaje: "Formato de fecha inválido." })
+        }
+
+        // 1. Verificar si existe la sesión para esa fecha
+        const yaExiste = await entregasService.existeSesion(fecha)
+        if (!yaExiste) {
+            return res.status(404).json({ mensaje: "No se encontró ningún proceso registrado para esta fecha." })
+        }
+
+        // 2. Ejecutar la eliminación en el servicio
+        await entregasService.eliminarProcesoCompleto(fecha)
+
+        res.json({ mensaje: "El proceso ha sido reiniciado y los registros eliminados correctamente." })
+    } catch (error) {
+        console.error("ERROR reiniciarProcesoPorFecha:", error)
+        res.status(500).json({ mensaje: "Error del servidor al reiniciar el proceso." })
     }
 }

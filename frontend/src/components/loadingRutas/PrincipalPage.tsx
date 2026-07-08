@@ -2,41 +2,42 @@ import { useState, useRef } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useRutas } from "../../context/RutasContext"
 import { useNavigate } from "react-router-dom"
-import { faFileExcel, faUpload, faCheckCircle, faTimesCircle, faGear } from "@fortawesome/free-solid-svg-icons"
+import { faFileExcel, faUpload, faCheckCircle, faTimesCircle, faGear, faCalendarDays } from "@fortawesome/free-solid-svg-icons"
 import { faCircle } from "@fortawesome/free-regular-svg-icons"
 import ExcelJS from "exceljs"
 import "./PrincipalPage.css"
 
-interface FilaRuta {
-    reporte: string
-    razonSocial: string
-    nroVale: string
-    nroPedido: string
-    nroGuia: string
-    direccion: string
-    distrito: string
-    valorTotal: string
+export interface FilaRuta {
+    reporte: string; razonSocial: string; nroVale: string
+    nroPedido: string; nroGuia: string; direccion: string
+    distrito: string; valorTotal: string
+}
+
+export interface Configuracion {
+    conductor: string; auxiliar: string; placa: string
 }
 
 const COLUMNAS = [
-    { key: "reporte", label: "Reporte" },
+    { key: "reporte",     label: "Reporte" },
     { key: "razonSocial", label: "Razón Social" },
-    { key: "nroVale", label: "Nro Vale" },
-    { key: "nroPedido", label: "Nro Pedido" },
-    { key: "nroGuia", label: "Nro Guía" },
-    { key: "direccion", label: "Dirección" },
-    { key: "distrito", label: "Distrito" },
-    { key: "valorTotal", label: "Valor Total" },
+    { key: "nroVale",     label: "Nro Vale" },
+    { key: "nroPedido",   label: "Nro Pedido" },
+    { key: "nroGuia",     label: "Nro Guía" },
+    { key: "direccion",   label: "Dirección" },
+    { key: "distrito",    label: "Distrito" },
+    { key: "valorTotal",  label: "Valor Total" },
 ]
 
 const PrincipalPage = () => {
-    const { filas, setFilas, confirmarRutas } = useRutas()
+    const { filas, setFilas, confirmarRutas, fechaProceso, setFechaProceso } = useRutas()
     const navigate = useNavigate()
     const [nombreArchivo, setNombreArchivo] = useState<string | null>(null)
-    const [error, setError] = useState<string | null>(null)
+    const [error,         setError]         = useState<string | null>(null)
+    const [revisadas,     setRevisadas]     = useState<Set<number>>(new Set())
     const inputRef = useRef<HTMLInputElement>(null)
 
-    // Helper para formatear moneda PEN
+    const hoyMax = new Date().toISOString().split("T")[0]
+
     const formatearPEN = (valor: string): string => {
         const num = parseFloat(valor.replace(/,/g, ""))
         if (isNaN(num)) return valor
@@ -46,20 +47,17 @@ const PrincipalPage = () => {
         })
     }
 
-    // Helper para detectar si es fila de total
     const esTotalRow = (fila: FilaRuta): boolean =>
         fila.reporte.toLowerCase().includes("total")
 
     const procesarExcel = async (file: File) => {
         setError(null)
         try {
-            const buffer = await file.arrayBuffer()
-            const workbook = new ExcelJS.Workbook()
+            const buffer    = await file.arrayBuffer()
+            const workbook  = new ExcelJS.Workbook()
             await workbook.xlsx.load(buffer)
-
             const worksheet = workbook.worksheets[0]
 
-            // Buscar fila de encabezados (contiene "CHOFER")
             let headerRowNum = -1
             worksheet.eachRow((row, rowNum) => {
                 if (headerRowNum !== -1) return
@@ -76,30 +74,25 @@ const PrincipalPage = () => {
             }
 
             const mapped: FilaRuta[] = []
-
             worksheet.eachRow((row, rowNum) => {
                 if (rowNum <= headerRowNum) return
-                const v = row.values as any[]  // índice 1-based en exceljs
-
-                // Saltar filas completamente vacías
+                const v = row.values as any[]
                 const tieneData = v.slice(1).some(c => c != null && c !== "")
                 if (!tieneData) return
-
                 mapped.push({
-                    reporte: String(v[1] ?? ""),
-                    razonSocial: String(v[4] ?? ""),
-                    nroVale: String(v[5] ?? ""),
-                    nroPedido: String(v[6] ?? ""),
-                    nroGuia: String(v[7] ?? ""),
-                    direccion: String(v[8] ?? ""),
-                    distrito: String(v[9] ?? ""),
-                    valorTotal: String(v[11] ?? ""),
+                    reporte:     String(v[1]  ?? ""),
+                    razonSocial: String(v[4]  ?? ""),
+                    nroVale:     String(v[5]  ?? ""),
+                    nroPedido:   String(v[6]  ?? ""),
+                    nroGuia:     String(v[7]  ?? ""),
+                    direccion:   String(v[8]  ?? ""),
+                    distrito:    String(v[9]  ?? ""),
+                    valorTotal:  String(v[11] ?? ""),
                 })
             })
 
             setFilas(mapped)
             setNombreArchivo(file.name)
-
         } catch {
             setError("Error al leer el archivo. Asegúrate de que sea un Excel válido (.xlsx).")
         }
@@ -115,9 +108,8 @@ const PrincipalPage = () => {
         setFilas([])
         setNombreArchivo(null)
         setError(null)
+        setRevisadas(new Set())
     }
-
-    const [revisadas, setRevisadas] = useState<Set<number>>(new Set())
 
     const toggleRevisada = (i: number) => {
         setRevisadas(prev => {
@@ -130,6 +122,19 @@ const PrincipalPage = () => {
     return (
         <div className="content">
             <h1>Cargar Rutas</h1>
+
+            {/* ── Selector de fecha del proceso ── */}
+            <div className="cargar-fecha">
+                <FontAwesomeIcon icon={faCalendarDays} className="fecha-icon" />
+                <span>Fecha del proceso:</span>
+                <input
+                    type="date"
+                    value={fechaProceso}
+                    max={hoyMax}
+                    onChange={e => setFechaProceso(e.target.value)}
+                />
+            </div>
+
             {/* Card de carga */}
             <div className="content-card">
                 <div className="content-excel">
@@ -139,9 +144,7 @@ const PrincipalPage = () => {
                         <h3>Sube el archivo Excel con la programación del día</h3>
                     </div>
                 </div>
-
                 <div className="content-buttons">
-                    {/* Input oculto */}
                     <input
                         ref={inputRef}
                         type="file"
@@ -161,7 +164,6 @@ const PrincipalPage = () => {
                     )}
                 </div>
 
-                {/* Estado del archivo cargado */}
                 {nombreArchivo && !error && (
                     <p className="archivo-ok">
                         <FontAwesomeIcon icon={faCheckCircle} /> Archivo cargado: {nombreArchivo}
@@ -177,12 +179,14 @@ const PrincipalPage = () => {
             {/* Tabla */}
             {filas.length > 0 && (
                 <div className="content-table-wrap">
-                    <p className="total-pedidos">Totalidad de Pedidos: <strong>{filas.length}</strong></p>
+                    <p className="total-pedidos">
+                        Totalidad de Pedidos: <strong>{filas.filter(f => !esTotalRow(f)).length}</strong>
+                    </p>
                     <div className="table-scroll">
                         <table className="ruta-table">
                             <thead>
                                 <tr>
-                                    <th className="th-check"></th>   {/* ← celda vacía para el ícono */}
+                                    <th className="th-check"></th>
                                     <th>#</th>
                                     {COLUMNAS.map(c => <th key={c.key}>{c.label}</th>)}
                                 </tr>
@@ -190,15 +194,12 @@ const PrincipalPage = () => {
                             <tbody>
                                 {filas.map((fila, i) => {
                                     const esTotal = esTotalRow(fila)
-                                    // Número de orden: solo cuenta filas que no son total
                                     const orden = filas.slice(0, i).filter(f => !esTotalRow(f)).length + 1
-
                                     return (
                                         <tr
                                             key={i}
                                             className={`fila-ruta ${revisadas.has(i) ? "fila-revisada" : ""} ${esTotal ? "fila-total" : ""}`}
                                         >
-                                            {/* Celda check — deshabilitada en fila total */}
                                             <td className="td-check">
                                                 {!esTotal && (
                                                     <button
@@ -210,14 +211,10 @@ const PrincipalPage = () => {
                                                     </button>
                                                 )}
                                             </td>
-
-                                            {/* Nro de orden — vacío en fila total */}
                                             <td>{!esTotal ? orden : ""}</td>
-
                                             {COLUMNAS.map(c => {
                                                 const valor = (fila as any)[c.key]
                                                 const vacio = valor === "" || valor === "undefined" || valor == null
-
                                                 return (
                                                     <td key={c.key}>
                                                         {vacio
@@ -235,7 +232,7 @@ const PrincipalPage = () => {
                             </tbody>
                         </table>
                     </div>
-                    {/* ← BOTÓN NUEVO al final */}
+
                     <div className="confirmar-rutas-wrap">
                         <button
                             className="btn-confirmar"
@@ -250,7 +247,7 @@ const PrincipalPage = () => {
                     </div>
                 </div>
             )}
-        </div >
+        </div>
     )
 }
 

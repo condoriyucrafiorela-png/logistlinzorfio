@@ -7,7 +7,8 @@ import {
     guardarEntregas, getFechas, getReportePorFecha,
     guardarRegistro, getFoto, subirFotoEvidencia,
     actualizarEstado, crearGestion,
-    getPendientesGestion, getGestiones, descargarGestionesExcel
+    getPendientesGestion, getGestiones, descargarGestionesExcel,
+    reiniciarProcesoPorFecha
 } from "../controllers/entregasController.js"
 
 // ── Multer con memoria: el archivo llega como buffer, Cloudinary lo sube directo ──
@@ -34,5 +35,7 @@ router.post("/gestion",             verificarToken, crearGestion)
 router.get("/gestion/pendientes", verificarToken, getPendientesGestion)
 router.get("/gestion/listar",     verificarToken, getGestiones)
 router.get("/gestion/excel",      verificarToken, descargarGestionesExcel)
+
+router.delete("/reporte/:fecha/reiniciar", verificarToken, reiniciarProcesoPorFecha)
 
 export default router
