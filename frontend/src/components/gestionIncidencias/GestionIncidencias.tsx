@@ -79,6 +79,8 @@ const GestionIncidencias = () => {
         }
     }
 
+    useEffect(() => { cargarDatos(fecha) }, [fecha])
+
     useEffect(() => {
         const fechaParam = searchParams.get("fecha")
         if (fechaParam) setFecha(fechaParam)
