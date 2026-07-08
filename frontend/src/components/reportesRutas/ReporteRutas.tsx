@@ -38,11 +38,9 @@ const ReporteRutas = () => {
     const limaTime = new Date(ahora.getTime() + (-5 * 60 - ahora.getTimezoneOffset()) * 60000)
     const hoy = limaTime.toISOString().split("T")[0]
 
-    const { configs } = useRutas()
+    const { configs, reiniciarTodo } = useRutas()
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
-
-    const { setEstados, setRechazos } = useRutas()
 
     // Control de tabs y filtros
     const [tab, setTab] = useState<"efectividad" | "estados">("efectividad")
@@ -108,9 +106,10 @@ const ReporteRutas = () => {
     // Acción para vaciar el proceso del día en cascada
     const handleReiniciarProceso = async () => {
         const confirmar = window.confirm(
-            `¿Estás seguro de reiniciar el proceso del ${formatFecha(fecha)}?\nPodrás volver a gestionar las entregas sin necesidad de recargar el Excel.`
+            `¿Estás seguro de reiniciar el proceso del ${formatFecha(fecha)}?\nTendrás que volver a cargar el Excel desde cero.`
         )
         if (!confirmar) return
+
         setReiniciando(true)
         try {
             const res = await fetch(`${API_URL}/api/entregas/reporte/${fecha}/reiniciar`, {
@@ -118,10 +117,8 @@ const ReporteRutas = () => {
                 headers: { Authorization: `Bearer ${token}` }
             })
             if (res.ok) {
-                // Limpia solo estados y rechazos, mantiene filas y configs
-                setEstados({})
-                setRechazos({})
-                navigate("/gestion/entregas")
+                reiniciarTodo()              // ← limpia filas, filasConfirmadas, configs, estados, rechazos
+                navigate("/gestion/cargar")   // ← regresa a Cargar Rutas
             } else {
                 const errData = await res.json()
                 alert(errData.mensaje || "Error al reiniciar el proceso.")
