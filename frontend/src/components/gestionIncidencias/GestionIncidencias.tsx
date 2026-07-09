@@ -55,29 +55,43 @@ const GestionIncidencias = () => {
     const token = localStorage.getItem("token")
 
     const cargarDatos = async (f: string) => {
-        setCargando(true)
-        try {
-            const [resPend, resList] = await Promise.all([
-                fetch(`${API_URL}/api/entregas/gestion/pendientes?fecha=${f}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                }),
-                fetch(`${API_URL}/api/entregas/gestion/listar?fecha=${f}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-            ])
+    setCargando(true)
+    try {
+        const [resPend, resList] = await Promise.all([
+            fetch(`${API_URL}/api/entregas/gestion/pendientes?fecha=${f}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            }),
+            fetch(`${API_URL}/api/entregas/gestion/listar?fecha=${f}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+        ])
+
+        if (!resPend.ok || !resList.ok) {
+            setPendientes(0) [cite: 72]
+            setPendientesData([]) [cite: 73]
+            setGestiones([]) [cite: 73]
+            return
+        }
+        
             const dataPend = await resPend.json()
             const dataList = await resList.json()
-            setPendientes(dataPend.total)
+        
+            setPendientes(dataPend.total ?? 0)
             setPaginaPendientes(1)
             setExpandido(false)
-            setPendientesData(dataPend.pendientes)
-            setGestiones(dataList.gestiones)
-        } catch {
-            console.error("Error al cargar datos de gestión")
-        } finally {
-            setCargando(false)
-        }
+        
+            setPendientesData(dataPend.pendientes || [])
+            setGestiones(dataList.gestiones || [])
+        
+        } catch (error) {
+        console.error("Error al cargar datos de gestión", error)
+        
+        setPendientesData([])
+        setGestiones([])
+    } finally {
+        setCargando(false)
     }
+}
 
     useEffect(() => { cargarDatos(fecha) }, [fecha])
 
