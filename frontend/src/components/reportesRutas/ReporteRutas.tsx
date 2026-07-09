@@ -188,6 +188,7 @@ const ReporteRutas = () => {
                 if (!prev) return prev
                 return {
                     ...prev,
+                    // Buscamos el pedido editado por su ID y cambiamos su estado a gestionado
                     entregas: prev.entregas.map(e =>
                         e.id === modalGestion.id
                             ? { 
@@ -204,10 +205,8 @@ const ReporteRutas = () => {
 
             cerrarModalGestion()
             
-        navigate(`/gestion/incidencias?fecha=${fecha}`)
-
-        } catch {
-            console.error("Error al guardar gestión")
+        } catch (error) {
+            console.error("Error al guardar gestión", error)
         } finally {
             setGuardandoGestion(false)
         }
