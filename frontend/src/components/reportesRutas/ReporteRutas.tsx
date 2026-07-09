@@ -68,6 +68,8 @@ const ReporteRutas = () => {
 
     // Carga de datos desde la API
     const fetchReporte = async (f: string) => {
+        if (!f || f.trim() === "") return
+        
         setCargando(true)
         setSinDatos(false)
         setReporte(null)
@@ -182,7 +184,28 @@ const ReporteRutas = () => {
 
             // ... tu lógica de actualizar estado local (setReporte) se queda exactamente igual ...
 
+            setReporte(prev => {
+                if (!prev) return prev
+                return {
+                    ...prev,
+                    entregas: prev.entregas.map(e =>
+                        e.id === modalGestion.id
+                            ? { 
+                                ...e, 
+                                gestionado: true,
+                                tipo_gestion: tipoGestion,
+                                descripcion_gestion: descripcionGestion,
+                                chofer_gestion: chofer
+                              }
+                            : e
+                    )
+                }
+            })
+
             cerrarModalGestion()
+            
+        navigate(`/gestion/incidencias?fecha=${fecha}`)
+
         } catch {
             console.error("Error al guardar gestión")
         } finally {
