@@ -67,9 +67,9 @@ const GestionIncidencias = () => {
         ])
 
         if (!resPend.ok || !resList.ok) {
-            setPendientes(0) [cite: 72]
-            setPendientesData([]) [cite: 73]
-            setGestiones([]) [cite: 73]
+            setPendientes(0)
+            setPendientesData([])
+            setGestiones([])
             return
         }
         
