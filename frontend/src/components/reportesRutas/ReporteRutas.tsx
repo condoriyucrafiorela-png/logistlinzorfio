@@ -68,8 +68,8 @@ const ReporteRutas = () => {
 
     // Carga de datos desde la API
     const fetchReporte = async (f: string) => {
-        if (!f || f.trim() === "") return
-        
+        if (!f || f.trim() === "") return 
+
         setCargando(true)
         setSinDatos(false)
         setReporte(null)
