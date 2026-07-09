@@ -166,47 +166,35 @@ const ReporteRutas = () => {
     // Persistencia de la gestión de incidencias
     const handleGuardarGestion = async () => {
         if (!descripcionGestion.trim() || !modalGestion) return
-        setGuardandoGestion(true)
+        setGuardandoGestion(true) 
         try {
-            await fetch(`${API_URL}/api/entregas/gestion`, {
-                method: "POST",
+            const res = await fetch(`${API_URL}/api/entregas/gestion`, {
+                method: "POST", 
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                body: JSON.stringify({
-                    registroId: modalGestion.id,
-                    empresaCliente: modalGestion.razon_social,
-                    nroVale: modalGestion.nro_vale,
+                body: JSON.stringify({ 
+                    registroId: modalGestion.id, 
+                    empresaCliente: modalGestion.razon_social, 
+                    nroVale: modalGestion.nro_vale, 
                     nroPedido: modalGestion.nro_pedido,
                     tipoGestion,
-                    descripcion: descripcionGestion,
+                    descripcion: descripcionGestion, 
                     chofer
                 })
-            })
+            }) 
 
-            // ... tu lógica de actualizar estado local (setReporte) se queda exactamente igual ...
+            if (res.ok) {
+                // 🔄 SOLUCIÓN: Volvemos a consultar el reporte limpio desde la BD de USA
+                // Esto asegura que e.gestionado venga como true y el botón cambie al instante
+                await fetchReporte(fecha)
+                cerrarModalGestion()
+            } else {
+                const errorData = await res.json()
+                alert(errorData.mensaje || "Error al guardar la gestión.")
+            }
 
-            setReporte(prev => {
-                if (!prev) return prev
-                return {
-                    ...prev,
-                    // Buscamos el pedido editado por su ID y cambiamos su estado a gestionado
-                    entregas: prev.entregas.map(e =>
-                        e.id === modalGestion.id
-                            ? { 
-                                ...e, 
-                                gestionado: true,
-                                tipo_gestion: tipoGestion,
-                                descripcion_gestion: descripcionGestion,
-                                chofer_gestion: chofer
-                              }
-                            : e
-                    )
-                }
-            })
-
-            cerrarModalGestion()
-            
         } catch (error) {
             console.error("Error al guardar gestión", error)
+            alert("Error de conexión con el servidor.")
         } finally {
             setGuardandoGestion(false)
         }
