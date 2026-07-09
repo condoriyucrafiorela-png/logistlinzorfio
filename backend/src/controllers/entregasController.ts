@@ -207,7 +207,7 @@ export const crearGestion = async (req: Request, res: Response) => {
 
 export const getPendientesGestion = async (req: Request, res: Response) => {
     try {
-        const fecha = (req.query.fecha as string) ?? new Date().toISOString().split("T")[0]
+        const fecha = (req.query.fecha as string) || new Date().toISOString().split("T")[0]
 
         if (!esFechaValida(fecha)) {
             return res.status(400).json({ mensaje: "Formato de fecha inválido." })
@@ -223,8 +223,8 @@ export const getPendientesGestion = async (req: Request, res: Response) => {
 
 export const getGestiones = async (req: Request, res: Response) => {
     try {
-        const fecha = (req.query.fecha as string) ?? new Date().toISOString().split("T")[0]
-
+        const fecha = (req.query.fecha as string) || new Date().toISOString().split("T")[0]
+        
         if (!esFechaValida(fecha)) {
             return res.status(400).json({ mensaje: "Formato de fecha inválido." })
         }
