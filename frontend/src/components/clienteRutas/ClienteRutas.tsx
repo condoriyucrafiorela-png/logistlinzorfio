@@ -31,8 +31,6 @@ const ClienteRutas = () => {
     const [clienteEliminar, setClienteEliminar] = useState<Cliente | null>(null)
     const [eliminando, setEliminando] = useState(false)
 
-    const token = localStorage.getItem("token")
-
     const cargarClientes = async () => {
         setCargando(true)
         try {

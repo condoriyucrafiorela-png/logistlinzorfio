@@ -30,8 +30,6 @@ const PersonalRutas = () => {
     const [personaEliminar, setPersonaEliminar] = useState<Persona | null>(null)
     const [eliminando, setEliminando] = useState(false)
 
-    const token = localStorage.getItem("token")
-
     const fetchPersonal = async () => {
         try {
             // Migrado a fetchConAuth y removida la cabecera manual

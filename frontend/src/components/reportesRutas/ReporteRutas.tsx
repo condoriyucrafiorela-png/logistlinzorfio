@@ -64,8 +64,6 @@ const ReporteRutas = () => {
     const [nuevoEstado, setNuevoEstado] = useState("")
     const [guardandoEstado, setGuardandoEstado] = useState(false)
 
-    const token = localStorage.getItem("token")
-
     // Carga de datos desde la API
     const fetchReporte = async (f: string) => {
         if (!f || f.trim() === "") return 

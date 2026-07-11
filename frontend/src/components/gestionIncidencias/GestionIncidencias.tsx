@@ -52,7 +52,6 @@ const GestionIncidencias = () => {
         paginaPendientes * POR_PAGINA
     )
     const navigate = useNavigate()
-    const token = localStorage.getItem("token")
 
     const cargarDatos = async (f: string) => {
         setCargando(true)
