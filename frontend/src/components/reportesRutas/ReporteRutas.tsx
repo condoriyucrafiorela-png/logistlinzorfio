@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCalendarDays, faPencil, faCircleCheck, faTrashCan } from "@fortawesome/free-solid-svg-icons"
 import "./ReporteRutas.css"
 import { useRutas } from "../../context/RutasContext"
-import { API_URL } from "../../config/api"
+import { API_URL, fetchConAuth } from "../../config/api"
 
 interface RegistroEntrega {
     id: number
@@ -75,9 +75,8 @@ const ReporteRutas = () => {
         setReporte(null)
         setFotosCache({})
         try {
-            const res = await fetch(`${API_URL}/api/entregas/reporte/${f}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
+            // Migrado a fetchConAuth
+            const res = await fetchConAuth(`${API_URL}/api/entregas/reporte/${f}`)
             if (res.status === 404) {
                 setSinDatos(true)
                 return
@@ -95,9 +94,8 @@ const ReporteRutas = () => {
     const cargarFoto = async (id: number) => {
         if (fotosCache[id]) return
         try {
-            const res = await fetch(`${API_URL}/api/entregas/foto/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
+            // Migrado a fetchConAuth
+            const res = await fetchConAuth(`${API_URL}/api/entregas/foto/${id}`)
             const data = await res.json()
             setFotosCache(prev => ({ ...prev, [id]: data.foto }))
         } catch {
@@ -114,13 +112,13 @@ const ReporteRutas = () => {
 
         setReiniciando(true)
         try {
-            const res = await fetch(`${API_URL}/api/entregas/reporte/${fecha}/reiniciar`, {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` }
+            // Migrado a fetchConAuth
+            const res = await fetchConAuth(`${API_URL}/api/entregas/reporte/${fecha}/reiniciar`, {
+                method: "DELETE"
             })
             if (res.ok) {
-                reiniciarTodo()              // ← limpia filas, filasConfirmadas, configs, estados, rechazos
-                navigate("/gestion/cargar")   // ← regresa a Cargar Rutas
+                reiniciarTodo()
+                navigate("/gestion/cargar")
             } else {
                 const errData = await res.json()
                 alert(errData.mensaje || "Error al reiniciar el proceso.")
@@ -168,30 +166,28 @@ const ReporteRutas = () => {
         if (!descripcionGestion.trim() || !modalGestion) return
         setGuardandoGestion(true) 
         try {
-            const res = await fetch(`${API_URL}/api/entregas/gestion`, {
+            // Migrado a fetchConAuth
+            const res = await fetchConAuth(`${API_URL}/api/entregas/gestion`, {
                 method: "POST", 
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
                     registroId: modalGestion.id, 
-                    empresaCliente: modalGestion.razon_social, 
+                    empresaCliente: modalGestion.razon_social,
                     nroVale: modalGestion.nro_vale, 
                     nroPedido: modalGestion.nro_pedido,
                     tipoGestion,
-                    descripcion: descripcionGestion, 
+                    descripcion: descripcionGestion,
                     chofer
                 })
             }) 
 
             if (res.ok) {
-                // 🔄 SOLUCIÓN: Volvemos a consultar el reporte limpio desde la BD de USA
-                // Esto asegura que e.gestionado venga como true y el botón cambie al instante
                 await fetchReporte(fecha)
                 cerrarModalGestion()
             } else {
                 const errorData = await res.json()
                 alert(errorData.mensaje || "Error al guardar la gestión.")
             }
-
         } catch (error) {
             console.error("Error al guardar gestión", error)
             alert("Error de conexión con el servidor.")
@@ -210,9 +206,10 @@ const ReporteRutas = () => {
         if (!modalEstado || !nuevoEstado) return
         setGuardandoEstado(true)
         try {
-            await fetch(`${API_URL}/api/entregas/registro/${modalEstado.id}/estado`, {
+            // Migrado a fetchConAuth
+            await fetchConAuth(`${API_URL}/api/entregas/registro/${modalEstado.id}/estado`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ estado: nuevoEstado })
             })
 

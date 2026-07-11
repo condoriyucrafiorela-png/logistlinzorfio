@@ -5,7 +5,7 @@ import { useSearchParams } from "react-router-dom"
 import { faCircleExclamation, faPenToSquare, faDownload, faCalendarDays, faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons"
 import "./GestionIncidencias.css"
 
-import { API_URL } from "../../config/api"
+import { API_URL, fetchConAuth } from "../../config/api"
 
 interface Gestion {
     id: number
@@ -55,23 +55,20 @@ const GestionIncidencias = () => {
     const token = localStorage.getItem("token")
 
     const cargarDatos = async (f: string) => {
-    setCargando(true)
-    try {
-        const [resPend, resList] = await Promise.all([
-            fetch(`${API_URL}/api/entregas/gestion/pendientes?fecha=${f}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            }),
-            fetch(`${API_URL}/api/entregas/gestion/listar?fecha=${f}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-        ])
+        setCargando(true)
+        try {
+            // Migrado a fetchConAuth: Eliminamos los bloques de headers manuales
+            const [resPend, resList] = await Promise.all([
+                fetchConAuth(`${API_URL}/api/entregas/gestion/pendientes?fecha=${f}`),
+                fetchConAuth(`${API_URL}/api/entregas/gestion/listar?fecha=${f}`)
+            ])
 
-        if (!resPend.ok || !resList.ok) {
-            setPendientes(0)
-            setPendientesData([])
-            setGestiones([])
-            return
-        }
+            if (!resPend.ok || !resList.ok) {
+                setPendientes(0)
+                setPendientesData([])
+                setGestiones([])
+                return
+            }
         
             const dataPend = await resPend.json()
             const dataList = await resList.json()
@@ -84,14 +81,13 @@ const GestionIncidencias = () => {
             setGestiones(dataList.gestiones || [])
         
         } catch (error) {
-        console.error("Error al cargar datos de gestión", error)
-        
-        setPendientesData([])
-        setGestiones([])
-    } finally {
-        setCargando(false)
+            console.error("Error al cargar datos de gestión", error)
+            setPendientesData([])
+            setGestiones([])
+        } finally {
+            setCargando(false)
+        }
     }
-}
 
     useEffect(() => { cargarDatos(fecha) }, [fecha])
 
@@ -104,7 +100,8 @@ const GestionIncidencias = () => {
         new Date(f).toLocaleDateString("es-PE", { day: "numeric", month: "numeric", year: "numeric" })
 
     const handleDescargar = () => {
-        window.open(`${API_URL}/api/entregas/gestion/excel?fecha=${fecha}&token=${token}`, "_blank")
+        const tokenActual = localStorage.getItem("token")
+        window.open(`${API_URL}/api/entregas/gestion/excel?fecha=${fecha}&token=${tokenActual}`, "_blank")
     }
 
     const claseStyle = (clase: string) => {

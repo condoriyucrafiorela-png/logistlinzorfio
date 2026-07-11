@@ -5,7 +5,7 @@ import {
     faPlus, faXmark, faFloppyDisk, faPencil, faTrash
 } from "@fortawesome/free-solid-svg-icons"
 import "./ClienteRutas.css"
-import { API_URL } from "../../config/api"
+import { API_URL, fetchConAuth } from "../../config/api"
 
 interface Cliente {
     id: number
@@ -36,9 +36,8 @@ const ClienteRutas = () => {
     const cargarClientes = async () => {
         setCargando(true)
         try {
-            const res = await fetch(`${API_URL}/api/clientes`, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
+            // Cambiado a fetchConAuth y removido el header Authorization manual
+            const res = await fetchConAuth(`${API_URL}/api/clientes`)
             const data = await res.json()
             setClientes(data.clientes)
         } catch {
@@ -103,9 +102,10 @@ const ClienteRutas = () => {
                 : `${API_URL}/api/clientes`
             const method = editando ? "PUT" : "POST"
 
-            const res = await fetch(url, {
+            // Cambiado a fetchConAuth y removido el Authorization manual
+            const res = await fetchConAuth(url, {
                 method,
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     nombre: nombreNuevo,
                     requerimientos: requerimientosNuevo.filter(r => r.trim() !== "")
@@ -130,9 +130,9 @@ const ClienteRutas = () => {
         if (!clienteEliminar) return
         setEliminando(true)
         try {
-            await fetch(`${API_URL}/api/clientes/${clienteEliminar.id}`, {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` }
+            // Cambiado a fetchConAuth y removido el Authorization manual
+            await fetchConAuth(`${API_URL}/api/clientes/${clienteEliminar.id}`, {
+                method: "DELETE"
             })
             setClienteEliminar(null)
             cargarClientes()

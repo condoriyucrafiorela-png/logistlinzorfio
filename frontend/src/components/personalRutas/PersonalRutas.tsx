@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faIdCard, faUsersLine, faPlus, faFloppyDisk, faPencil, faTrash } from "@fortawesome/free-solid-svg-icons"
 import "./PersonalRutas.css"
 
-import { API_URL } from "../../config/api"
+import { API_URL, fetchConAuth } from "../../config/api"
 
 interface Persona {
     id: number
@@ -34,9 +34,8 @@ const PersonalRutas = () => {
 
     const fetchPersonal = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/personal`, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
+            // Migrado a fetchConAuth y removida la cabecera manual
+            const res = await fetchConAuth(`${API_URL}/api/personal`)
             const data = await res.json()
             setPersonal(data.personal)
         } catch {
@@ -92,9 +91,10 @@ const PersonalRutas = () => {
                 : `${API_URL}/api/personal`
             const method = editando ? "PUT" : "POST"
 
-            const res = await fetch(url, {
+            // Migrado a fetchConAuth y limpiados los headers redundantes
+            const res = await fetchConAuth(url, {
                 method,
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     nombre: nombreNuevo,
                     apellido: apellidoNuevo,
@@ -120,9 +120,9 @@ const PersonalRutas = () => {
         if (!personaEliminar) return
         setEliminando(true)
         try {
-            await fetch(`${API_URL}/api/personal/${personaEliminar.id}`, {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` }
+            // Migrado a fetchConAuth
+            await fetchConAuth(`${API_URL}/api/personal/${personaEliminar.id}`, {
+                method: "DELETE"
             })
             setPersonaEliminar(null)
             fetchPersonal()

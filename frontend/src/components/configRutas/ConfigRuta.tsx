@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
+import { API_URL, fetchConAuth } from "../../config/api"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faUser, faUsers, faTruck, faFloppyDisk, faCircleCheck } from "@fortawesome/free-solid-svg-icons"
 import { useRutas } from "../../context/RutasContext"
 import "./ConfigRuta.css"
-
-import { API_URL } from "../../config/api"
-
 interface Persona {
     id: number
     nombre: string
@@ -44,10 +42,8 @@ const ConfigRuta = () => {
     useEffect(() => {
         const fetchPersonal = async () => {
             try {
-                const token = localStorage.getItem("token")
-                const res = await fetch(`${API_URL}/api/personal`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
+                // Cambiado a fetchConAuth y removida la lectura manual del token
+                const res = await fetchConAuth(`${API_URL}/api/personal`)
                 const data = await res.json()
                 setPersonal(data.personal)
             } catch {
