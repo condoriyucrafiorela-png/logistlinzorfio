@@ -98,10 +98,31 @@ const GestionIncidencias = () => {
     const formatFecha = (f: string) =>
         new Date(f).toLocaleDateString("es-PE", { day: "numeric", month: "numeric", year: "numeric" })
 
-    const handleDescargar = () => {
-        const tokenActual = localStorage.getItem("token")
-        window.open(`${API_URL}/api/entregas/gestion/excel?fecha=${fecha}&token=${tokenActual}`, "_blank")
+    const handleDescargar = async () => {
+    try {
+        const res = await fetchConAuth(`${API_URL}/api/entregas/gestion/excel?fecha=${fecha}`)
+        
+        if (!res.ok) {
+            alert("No se pudo generar el archivo Excel. Verifique su sesión.")
+            return
+        }
+
+        const blob = await res.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        
+        a.href = url
+        a.download = `Reporte_Incidencias_${fecha}.xlsx`
+        document.body.appendChild(a)
+        a.click()
+        
+        document.body.removeChild(a)
+        window.URL.revokeObjectURL(url)
+    } catch (error) {
+        console.error("Error al descargar incidencias:", error)
+        alert("Error de conexión al intentar descargar el archivo.")
     }
+}
 
     const claseStyle = (clase: string) => {
         switch (clase.toUpperCase()) {
