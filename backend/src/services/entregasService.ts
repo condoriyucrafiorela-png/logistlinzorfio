@@ -84,14 +84,15 @@ export const guardarSesion = async (
 export const upsertRegistro = async (sesionId: number, entrega: any) => {
     await pool.query(
         `INSERT INTO registros_entrega
-         (sesion_id, fila_id, nro_guia, nro_pedido, nro_vale, razon_social, reporte, placa,
-          estado, motivo_rechazo, foto_rechazo)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-         ON CONFLICT (sesion_id, fila_id)
-         DO UPDATE SET
-             estado         = EXCLUDED.estado,
-             motivo_rechazo = EXCLUDED.motivo_rechazo,
-             foto_rechazo   = EXCLUDED.foto_rechazo`,
+        (sesion_id, fila_id, nro_guia, nro_pedido, nro_vale, razon_social, reporte, placa, chofer,
+        estado, motivo_rechazo, foto_rechazo)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        ON CONFLICT (sesion_id, fila_id)
+        DO UPDATE SET
+                chofer         = EXCLUDED.chofer,
+                estado         = EXCLUDED.estado,
+                motivo_rechazo = EXCLUDED.motivo_rechazo,
+                foto_rechazo   = EXCLUDED.foto_rechazo`,
         [
             sesionId,
             entrega.filaId,
@@ -101,6 +102,7 @@ export const upsertRegistro = async (sesionId: number, entrega: any) => {
             entrega.razonSocial,
             entrega.reporte,
             entrega.placa,
+            entrega.chofer ?? null,
             entrega.estado,
             entrega.motivoRechazo ?? null,
             entrega.fotoRechazo ?? null
@@ -127,15 +129,15 @@ export const obtenerReporte = async (fecha: string) => {
 
     const registros = await pool.query(
         `SELECT re.id, re.sesion_id, re.nro_guia, re.nro_pedido, re.nro_vale, re.razon_social,
-                re.reporte, re.placa, re.estado, re.motivo_rechazo,
+                re.reporte, re.placa, re.chofer, re.estado, re.motivo_rechazo,
                 (gi.id IS NOT NULL) AS gestionado,
                 gi.tipo_gestion,
                 gi.descripcion AS descripcion_gestion,
                 gi.chofer AS chofer_gestion
-         FROM registros_entrega re
-         LEFT JOIN gestiones_incidencia gi ON gi.registro_id = re.id
-         WHERE re.sesion_id = $1
-         ORDER BY re.id`,
+            FROM registros_entrega re
+            LEFT JOIN gestiones_incidencia gi ON gi.registro_id = re.id
+            WHERE re.sesion_id = $1
+            ORDER BY re.id`,
         [sesionId]
     )
 

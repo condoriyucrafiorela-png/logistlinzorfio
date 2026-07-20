@@ -6,7 +6,7 @@ import { faCalendarDays, faPencil, faCircleCheck, faTrashCan } from "@fortawesom
 import "./ReporteRutas.css"
 import { useRutas } from "../../context/RutasContext"
 import { API_URL, fetchConAuth } from "../../config/api"
- 
+
 interface RegistroEntrega {
     id: number
     nro_guia: string
@@ -15,6 +15,7 @@ interface RegistroEntrega {
     razon_social: string
     reporte: string
     placa: string
+    chofer: string | null
     estado: "conforme" | "no_despachado"
     motivo_rechazo: string | null
     foto_rechazo: string | null
@@ -23,7 +24,6 @@ interface RegistroEntrega {
     descripcion_gestion: string | null
     chofer_gestion: string | null
 }
- 
 interface ReporteData {
     fecha: string
     total: number
@@ -31,7 +31,7 @@ interface ReporteData {
     no_despachados: number
     entregas: RegistroEntrega[]
 }
- 
+
 // ── Motivos predefinidos para el autocompletado de descripción ──
 const MOTIVOS_PREDEFINIDOS = [
     "Demoras en ruta: El chofer se retrasa con los primeros clientes y no llega a tiempo a los demás.",
@@ -54,17 +54,17 @@ const MOTIVOS_PREDEFINIDOS = [
     "Recojo manual por devolución o incidencia de producto.",
     "Pedido anulado / cancelación antes de carga."
 ]
- 
+
 const ReporteRutas = () => {
     // Manejo del tiempo local de Lima (UTC-5)
     const ahora = new Date()
     const limaTime = new Date(ahora.getTime() + (-5 * 60 - ahora.getTimezoneOffset()) * 60000)
     const hoy = limaTime.toISOString().split("T")[0]
- 
+
     const { configs, reiniciarTodo } = useRutas()
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
- 
+
     // Control de tabs y filtros
     const [tab, setTab] = useState<"efectividad" | "estados">("efectividad")
     const [fecha, setFecha] = useState(searchParams.get("fecha") ?? hoy)
@@ -73,7 +73,7 @@ const ReporteRutas = () => {
     const [sinDatos, setSinDatos] = useState(false)
     const [fotosCache, setFotosCache] = useState<Record<number, string>>({})
     const [reiniciando, setReiniciando] = useState(false)
- 
+
     // Control de modal de gestión de incidencias
     const [modalGestion, setModalGestion] = useState<RegistroEntrega | null>(null)
     const [tipoGestion, setTipoGestion] = useState("Reprogramar")
@@ -81,21 +81,21 @@ const ReporteRutas = () => {
     const [guardandoGestion, setGuardandoGestion] = useState(false)
     const [chofer, setChofer] = useState("")
     const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false)
- 
+
     // Autocompletado de descripción
     const [sugerenciasMotivo, setSugerenciasMotivo] = useState<string[]>([])
     const [mostrarSugMotivo, setMostrarSugMotivo] = useState(false)
     const motivoRef = useRef<HTMLDivElement>(null)
- 
+
     // Control de modal de cambio de estado
     const [modalEstado, setModalEstado] = useState<RegistroEntrega | null>(null)
     const [nuevoEstado, setNuevoEstado] = useState("")
     const [guardandoEstado, setGuardandoEstado] = useState(false)
- 
+
     // Carga de datos desde la API
     const fetchReporte = async (f: string) => {
-        if (!f || f.trim() === "") return 
- 
+        if (!f || f.trim() === "") return
+
         setCargando(true)
         setSinDatos(false)
         setReporte(null)
@@ -115,7 +115,7 @@ const ReporteRutas = () => {
             setCargando(false)
         }
     }
- 
+
     // Consulta asíncrona de imágenes de evidencia
     const cargarFoto = async (id: number) => {
         if (fotosCache[id]) return
@@ -128,14 +128,14 @@ const ReporteRutas = () => {
             console.error("Error al cargar foto", id)
         }
     }
- 
+
     // Acción para vaciar el proceso del día en cascada
     const handleReiniciarProceso = async () => {
         const confirmar = window.confirm(
             `¿Estás seguro de reiniciar el proceso del ${formatFecha(fecha)}?\nTendrás que volver a cargar el Excel desde cero.`
         )
         if (!confirmar) return
- 
+
         setReiniciando(true)
         try {
             // Migrado a fetchConAuth
@@ -155,11 +155,11 @@ const ReporteRutas = () => {
             setReiniciando(false)
         }
     }
- 
+
     useEffect(() => {
         fetchReporte(fecha)
     }, [fecha])
- 
+
     // Cierra el dropdown de sugerencias de motivo al hacer clic afuera
     useEffect(() => {
         const handleClickFuera = (e: MouseEvent) => {
@@ -170,19 +170,19 @@ const ReporteRutas = () => {
         document.addEventListener("mousedown", handleClickFuera)
         return () => document.removeEventListener("mousedown", handleClickFuera)
     }, [])
- 
+
     // Cálculo de efectividad y filtro de incidencias
     const efectividad = reporte
         ? ((reporte.conformes / reporte.total) * 100).toFixed(1)
         : "0.0"
- 
+
     const incidencias = reporte?.entregas?.filter(e => e?.estado === "no_despachado") ?? []
- 
+
     const formatFecha = (f: string) =>
         new Date(f + "T00:00:00").toLocaleDateString("es-PE", {
             day: "2-digit", month: "2-digit", year: "numeric"
         })
- 
+
     // Disparadores de formularios en modales
     const abrirGestion = (e: RegistroEntrega) => {
         setModalGestion(e)
@@ -190,54 +190,55 @@ const ReporteRutas = () => {
         setDescripcionGestion("")
         setSugerenciasMotivo([])
         setMostrarSugMotivo(false)
-        const conductorReporte = configs[e.reporte]?.conductor ?? ""
+
+        const conductorReporte = e.chofer || configs[e.reporte]?.conductor || ""
         setChofer(conductorReporte)
         setMostrarConfirmacion(false)
     }
- 
+
     const cerrarModalGestion = () => {
         setModalGestion(null)
         setMostrarConfirmacion(false)
     }
- 
+
     // Autocompletado de descripción: filtra motivos predefinidos según lo escrito
     const obtenerCoincidenciasMotivo = (texto: string): string[] => {
         if (!texto.trim()) return MOTIVOS_PREDEFINIDOS
         const t = texto.toLowerCase().trim()
         return MOTIVOS_PREDEFINIDOS.filter(m => m.toLowerCase().includes(t))
     }
- 
+
     const handleDescripcionChange = (valor: string) => {
         setDescripcionGestion(valor)
         setSugerenciasMotivo(obtenerCoincidenciasMotivo(valor))
         setMostrarSugMotivo(true)
     }
- 
+
     const seleccionarMotivo = (motivo: string) => {
         setDescripcionGestion(motivo)
         setMostrarSugMotivo(false)
     }
- 
+
     // Persistencia de la gestión de incidencias
     const handleGuardarGestion = async () => {
         if (!descripcionGestion.trim() || !modalGestion) return
-        setGuardandoGestion(true) 
+        setGuardandoGestion(true)
         try {
             // Migrado a fetchConAuth
             const res = await fetchConAuth(`${API_URL}/api/entregas/gestion`, {
-                method: "POST", 
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    registroId: modalGestion.id, 
+                body: JSON.stringify({
+                    registroId: modalGestion.id,
                     empresaCliente: modalGestion.razon_social,
-                    nroVale: modalGestion.nro_vale, 
+                    nroVale: modalGestion.nro_vale,
                     nroPedido: modalGestion.nro_pedido,
                     tipoGestion,
                     descripcion: descripcionGestion,
                     chofer
                 })
-            }) 
- 
+            })
+
             if (res.ok) {
                 await fetchReporte(fecha)
                 cerrarModalGestion()
@@ -252,12 +253,12 @@ const ReporteRutas = () => {
             setGuardandoGestion(false)
         }
     }
- 
+
     const abrirModalEstado = (e: RegistroEntrega) => {
         setModalEstado(e)
         setNuevoEstado(e.estado)
     }
- 
+
     // Persistencia del cambio de estado manual
     const handleGuardarEstado = async () => {
         if (!modalEstado || !nuevoEstado) return
@@ -269,7 +270,7 @@ const ReporteRutas = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ estado: nuevoEstado })
             })
- 
+
             setReporte(prev => {
                 if (!prev) return prev
                 return {
@@ -294,11 +295,11 @@ const ReporteRutas = () => {
             setGuardandoEstado(false)
         }
     }
- 
+
     return (
         <div className="content">
             <h1>Reportes</h1>
- 
+
             <div className="report-tabs">
                 <button className={`report-tab ${tab === "efectividad" ? "active" : ""}`} onClick={() => setTab("efectividad")}>
                     Efectividad de Entregas
@@ -307,7 +308,7 @@ const ReporteRutas = () => {
                     Estados de Rutas
                 </button>
             </div>
- 
+
             <div className="report-body">
                 <div className="report-header-actions">
                     <div className="report-fecha">
@@ -315,7 +316,7 @@ const ReporteRutas = () => {
                         <span>Filtrar por Fecha:</span>
                         <input type="date" value={fecha} max={hoy} onChange={e => setFecha(e.target.value)} />
                     </div>
- 
+
                     {reporte && !cargando && (
                         <div className="report-botones-derecha">
                             <button
@@ -336,15 +337,15 @@ const ReporteRutas = () => {
                         </div>
                     )}
                 </div>
- 
+
                 {cargando && <p className="report-estado">Cargando...</p>}
- 
+
                 {sinDatos && !cargando && (
                     <p className="report-estado sin-datos">
                         No hubo datos registrados el {formatFecha(fecha)}.
                     </p>
                 )}
- 
+
                 {/* TAB 1: Efectividad de Entregas */}
                 {tab === "efectividad" && reporte && !cargando && (
                     <>
@@ -366,11 +367,11 @@ const ReporteRutas = () => {
                                 <span className="card-value">{efectividad}%</span>
                             </div>
                         </div>
- 
+
                         <h3 className="report-section-title">
                             Incidencias (Ordenadas por Programación)
                         </h3>
- 
+
                         {incidencias.length === 0 ? (
                             <p className="report-estado">No hay incidencias para esta fecha.</p>
                         ) : (
@@ -426,7 +427,7 @@ const ReporteRutas = () => {
                                                 </button>
                                             )}
                                         </div>
- 
+
                                         {e.gestionado && (
                                             <>
                                                 <div className="inc-row">
@@ -451,7 +452,7 @@ const ReporteRutas = () => {
                         )}
                     </>
                 )}
- 
+
                 {/* TAB 2: Estados de Rutas */}
                 {tab === "estados" && reporte && !cargando && (
                     <>
@@ -496,13 +497,13 @@ const ReporteRutas = () => {
                     </>
                 )}
             </div>
- 
+
             {/* Modal: Formulario Gestionar Incidencia */}
             {modalGestion !== null && !mostrarConfirmacion && (
                 <div className="modal-overlay" onClick={cerrarModalGestion}>
                     <div className="modal-card" onClick={e => e.stopPropagation()}>
                         <h3>Gestionar Incidencia</h3>
- 
+
                         <div className="modal-grid">
                             <div className="form-group">
                                 <label>Empresa Cliente:</label>
@@ -513,7 +514,7 @@ const ReporteRutas = () => {
                                 <input type="text" value={modalGestion.nro_pedido} readOnly className="input-readonly" />
                             </div>
                         </div>
- 
+
                         <div className="form-group">
                             <label>Tipo de Gestión:</label>
                             <select value={tipoGestion} onChange={e => setTipoGestion(e.target.value)}>
@@ -522,12 +523,12 @@ const ReporteRutas = () => {
                                 <option>Nota de Crédito (NC)</option>
                             </select>
                         </div>
- 
+
                         <div className="form-group">
                             <label>Chofer:</label>
                             <input type="text" value={chofer || "—"} readOnly className="input-readonly" />
                         </div>
- 
+
                         <div className="form-group" ref={motivoRef}>
                             <label>Descripción (Obligatorio):</label>
                             <div className="autocomplete-wrap">
@@ -553,7 +554,7 @@ const ReporteRutas = () => {
                                 )}
                             </div>
                         </div>
- 
+
                         <div className="modal-actions">
                             <button
                                 className="btn-modal-guardar"
@@ -570,13 +571,13 @@ const ReporteRutas = () => {
                     </div>
                 </div>
             )}
- 
+
             {/* Modal: Confirmación antes de guardar */}
             {modalGestion !== null && mostrarConfirmacion && (
                 <div className="modal-overlay" onClick={() => setMostrarConfirmacion(false)}>
                     <div className="modal-card" onClick={e => e.stopPropagation()}>
                         <h3>¿Los datos están correctos?</h3>
- 
+
                         <div className="confirmacion-resumen">
                             <div className="confirmacion-item">
                                 <span className="inc-label">Gestión:</span>
@@ -591,7 +592,7 @@ const ReporteRutas = () => {
                                 <span className="inc-value">{descripcionGestion}</span>
                             </div>
                         </div>
- 
+
                         <div className="modal-actions">
                             <button
                                 className="btn-modal-ok"
@@ -608,13 +609,13 @@ const ReporteRutas = () => {
                     </div>
                 </div>
             )}
- 
+
             {/* Modal: Modificar Estado */}
             {modalEstado !== null && (
                 <div className="modal-overlay" onClick={() => setModalEstado(null)}>
                     <div className="modal-card" onClick={e => e.stopPropagation()}>
                         <h3>Modificar Estado del Pedido</h3>
- 
+
                         <div className="form-group">
                             <label>Nuevo Estado:</label>
                             <select value={nuevoEstado} onChange={e => setNuevoEstado(e.target.value)}>
@@ -622,7 +623,7 @@ const ReporteRutas = () => {
                                 <option value="no_despachado">No Despachado</option>
                             </select>
                         </div>
- 
+
                         <div className="modal-actions">
                             <button
                                 className="btn-modal-ok"
@@ -642,5 +643,5 @@ const ReporteRutas = () => {
         </div>
     )
 }
- 
+
 export default ReporteRutas

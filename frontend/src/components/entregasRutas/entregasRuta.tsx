@@ -49,36 +49,37 @@ const EntregasRuta = () => {
 
     // ── Guardar registro individual en backend ──
     const guardarRegistroAPI = async (
-        fila: typeof filas[0],
-        estadoFinal: "conforme" | "no_despachado",
-        rec?: { motivo: string; foto?: string | null }
-    ) => {
-        try {
-            const res = await fetchConAuth(`${API_URL}/api/entregas/registro`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    filaId: fila.filaId,
-                    nroGuia: fila.nroGuia,
-                    nroPedido: fila.nroPedido,
-                    nroVale: fila.nroVale,
-                    razonSocial: fila.razonSocial,
-                    reporte: fila.reporte,
-                    placa: configs[fila.reporte]?.placa ?? "",
-                    estado: estadoFinal,
-                    motivoRechazo: rec?.motivo ?? null,
-                    fotoRechazo: rec?.foto ?? null,
-                    fechaProceso
-                })
+    fila: typeof filas[0],
+    estadoFinal: "conforme" | "no_despachado",
+    rec?: { motivo: string; foto?: string | null }
+) => {
+    try {
+        const res = await fetchConAuth(`${API_URL}/api/entregas/registro`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                filaId: fila.filaId,
+                nroGuia: fila.nroGuia,
+                nroPedido: fila.nroPedido,
+                nroVale: fila.nroVale,
+                razonSocial: fila.razonSocial,
+                reporte: fila.reporte,
+                placa: configs[fila.reporte]?.placa ?? "",
+                chofer: configs[fila.reporte]?.conductor ?? "", // 👈 AHORA SÍ SE ENVÍA EL CHOFER A LA BD
+                estado: estadoFinal,
+                motivoRechazo: rec?.motivo ?? null,
+                fotoRechazo: rec?.foto ?? null,
+                fechaProceso
             })
-            const data = await res.json()
-            console.log("Respuesta guardarRegistro:", res.status, data)
-        } catch (err) {
-            console.error("Error guardarRegistroAPI:", err)
-        }
+        })
+        const data = await res.json()
+        console.log("Respuesta guardarRegistro:", res.status, data)
+    } catch (err) {
+        console.error("Error guardarRegistroAPI:", err)
     }
+}
 
     // Verifica si quedan pendientes después de un cambio de estado
     const verificarYNavegar = (clave: string, nuevoEstado: "entregado" | "no_despachado") => {
