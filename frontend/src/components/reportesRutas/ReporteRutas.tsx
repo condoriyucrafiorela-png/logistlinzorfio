@@ -202,9 +202,9 @@ const ReporteRutas = () => {
  
     // Autocompletado de descripción: filtra motivos predefinidos según lo escrito
     const obtenerCoincidenciasMotivo = (texto: string): string[] => {
-        if (!texto.trim()) return MOTIVOS_PREDEFINIDOS.slice(0, 6)
+        if (!texto.trim()) return MOTIVOS_PREDEFINIDOS
         const t = texto.toLowerCase().trim()
-        return MOTIVOS_PREDEFINIDOS.filter(m => m.toLowerCase().includes(t)).slice(0, 6)
+        return MOTIVOS_PREDEFINIDOS.filter(m => m.toLowerCase().includes(t))
     }
  
     const handleDescripcionChange = (valor: string) => {
@@ -644,4 +644,3 @@ const ReporteRutas = () => {
 }
  
 export default ReporteRutas
- 
