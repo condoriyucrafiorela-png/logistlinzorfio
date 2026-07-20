@@ -61,7 +61,7 @@ const ReporteRutas = () => {
     const limaTime = new Date(ahora.getTime() + (-5 * 60 - ahora.getTimezoneOffset()) * 60000)
     const hoy = limaTime.toISOString().split("T")[0]
 
-    const { configs, reiniciarTodo } = useRutas()
+    const { configs, fechaProceso, reiniciarTodo } = useRutas()
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
 
@@ -185,16 +185,21 @@ const ReporteRutas = () => {
 
     // Disparadores de formularios en modales
     const abrirGestion = (e: RegistroEntrega) => {
-        setModalGestion(e)
-        setTipoGestion("Reprogramar")
-        setDescripcionGestion("")
-        setSugerenciasMotivo([])
-        setMostrarSugMotivo(false)
+    setModalGestion(e)
+    setTipoGestion("Reprogramar")
+    setDescripcionGestion("")
+    setSugerenciasMotivo([])
+    setMostrarSugMotivo(false)
 
-        const conductorReporte = e.chofer || configs[e.reporte]?.conductor || ""
-        setChofer(conductorReporte)
-        setMostrarConfirmacion(false)
+    let conductorReporte = e.chofer || ""
+
+    if (!conductorReporte && fecha === fechaProceso) {
+        conductorReporte = configs[e.reporte]?.conductor || ""
     }
+
+    setChofer(conductorReporte)
+    setMostrarConfirmacion(false)
+}
 
     const cerrarModalGestion = () => {
         setModalGestion(null)
