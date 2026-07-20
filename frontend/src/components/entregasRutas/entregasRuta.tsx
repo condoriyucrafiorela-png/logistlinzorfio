@@ -1,41 +1,52 @@
 import { useRef, useState } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faFilter, faCheck, faTimes, faCamera } from "@fortawesome/free-solid-svg-icons"
+import { faFilter, faCheck, faTimes, faCamera, faSearch } from "@fortawesome/free-solid-svg-icons"
 import { useRutas } from "../../context/RutasContext"
 import { useNavigate } from "react-router-dom"
 import "./entregasRuta.css"
- 
+
 import { API_URL, fetchConAuth } from "../../config/api"
- 
+
 const EntregasRuta = () => {
- 
+
     const { filasConfirmadas, configs, estados, setEstados, rechazos, setRechazos, fechaProceso } = useRutas()
     const navigate = useNavigate()
- 
+
     const filas = filasConfirmadas.filter(
         f => !f.reporte.toLowerCase().includes("total") && f.reporte.trim() !== ""
     )
- 
+
+    // ── Estados para los filtros ──
     const [filtroPlaca, setFiltroPlaca] = useState("todas")
+    const [filtroGuia, setFiltroGuia] = useState("")
+    const [filtroPedido, setFiltroPedido] = useState("")
+    const [filtroVale, setFiltroVale] = useState("")
+
     const [modalConfirmar, setModalConfirmar] = useState<string | null>(null)
     const [modalRechazar, setModalRechazar] = useState<string | null>(null)
     const [motivo, setMotivo] = useState("")
     const [foto, setFoto] = useState<string | null>(null)
     const fotoRef = useRef<HTMLInputElement>(null)
- 
+
     const claveEntrega = (i: number) => filas[i]?.filaId ?? `row_${i}`
- 
+
     const placas = [...new Set(filas.map(f => configs[f.reporte]?.placa).filter(Boolean))]
- 
-    const filasFiltradas = filtroPlaca === "todas"
-        ? filas
-        : filas.filter(f => configs[f.reporte]?.placa === filtroPlaca)
- 
+
+    // ── Lógica de filtrado dinámico combinado ──
+    const filasFiltradas = filas.filter(f => {
+        const cumplePlaca = filtroPlaca === "todas" || configs[f.reporte]?.placa === filtroPlaca
+        const cumpleGuia = f.nroGuia.toLowerCase().includes(filtroGuia.toLowerCase().trim())
+        const cumplePedido = f.nroPedido.toLowerCase().includes(filtroPedido.toLowerCase().trim())
+        const cumpleVale = (f.nroVale ?? "").toLowerCase().includes(filtroVale.toLowerCase().trim())
+
+        return cumplePlaca && cumpleGuia && cumplePedido && cumpleVale
+    })
+
     const pendientes = filas.filter((_, i) => {
         const k = claveEntrega(i)
         return !estados[k] || estados[k] === "pendiente"
     }).length
- 
+
     // ── Guardar registro individual en backend ──
     const guardarRegistroAPI = async (
         fila: typeof filas[0],
@@ -68,7 +79,7 @@ const EntregasRuta = () => {
             console.error("Error guardarRegistroAPI:", err)
         }
     }
- 
+
     // Verifica si quedan pendientes después de un cambio de estado
     const verificarYNavegar = (clave: string, nuevoEstado: "entregado" | "no_despachado") => {
         const nuevosEstados = { ...estados, [clave]: nuevoEstado }
@@ -78,25 +89,25 @@ const EntregasRuta = () => {
         })
         if (!quedanPendientes) navigate(`/gestion/reportes?fecha=${fechaProceso}`)
     }
- 
+
     const handleConfirmar = async (clave: string) => {
         const idx = filas.findIndex((_, i) => claveEntrega(i) === clave)
         const fila = filas[idx]
- 
+
         setEstados(prev => ({ ...prev, [clave]: "entregado" }))
         setModalConfirmar(null)
- 
+
         await guardarRegistroAPI(fila, "conforme")
         verificarYNavegar(clave, "entregado")
     }
- 
+
     const handleFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
- 
+
         const formData = new FormData()
         formData.append("foto", file)
- 
+
         try {
             const res = await fetchConAuth(`${API_URL}/api/entregas/subir-foto`, {
                 method: "POST",
@@ -108,55 +119,89 @@ const EntregasRuta = () => {
             console.error("Error al subir foto")
         }
     }
- 
+
     const handleGuardarRechazo = async () => {
         if (!motivo.trim() || !modalRechazar) return
- 
+
         const claveActual = modalRechazar
         const motivoFinal = motivo.trim() + "TL"
         const idx = filas.findIndex((_, i) => claveEntrega(i) === claveActual)
         const fila = filas[idx]
- 
+
         // Guardamos los datos de rechazo con foto opcional
         setRechazos(prev => ({ ...prev, [claveActual]: { motivo: motivoFinal, foto: foto ?? "" } }))
         setEstados(prev => ({ ...prev, [claveActual]: "no_despachado" }))
- 
+
         // Cerramos el modal y limpiamos campos
         setModalRechazar(null)
         setMotivo("")
         const fotoAEnviar = foto
         setFoto(null)
- 
+
         if (fila) {
             await guardarRegistroAPI(fila, "no_despachado", { motivo: motivoFinal, foto: fotoAEnviar })
         }
         verificarYNavegar(claveActual, "no_despachado")
     }
- 
+
     const abrirRechazar = (clave: string) => {
         setModalRechazar(clave)
         setMotivo("")
         setFoto(null)
     }
- 
+
     return (
         <div className="content">
             <h1>Mis Entregas</h1>
- 
+
             <div className="entregas-header">
-                <div className="filtro-placa">
-                    <FontAwesomeIcon icon={faFilter} className="filtro-icon" />
-                    <label>Filtrar por Placa:</label>
-                    <select value={filtroPlaca} onChange={e => setFiltroPlaca(e.target.value)}>
-                        <option value="todas">Todas las placas</option>
-                        {placas.map(p => <option key={p} value={p}>{p}</option>)}
-                    </select>
+                {/* ── Contenedor de Filtros ── */}
+                <div className="filtros-busqueda-wrap">
+                    <div className="filtro-item">
+                        <FontAwesomeIcon icon={faFilter} className="filtro-icon" />
+                        <label>Placa:</label>
+                        <select value={filtroPlaca} onChange={e => setFiltroPlaca(e.target.value)}>
+                            <option value="todas">Todas</option>
+                            {placas.map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                    </div>
+
+                    <div className="filtro-item">
+                        <FontAwesomeIcon icon={faSearch} className="filtro-icon" />
+                        <input
+                            type="text"
+                            placeholder="Buscar N° Guía..."
+                            value={filtroGuia}
+                            onChange={e => setFiltroGuia(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="filtro-item">
+                        <FontAwesomeIcon icon={faSearch} className="filtro-icon" />
+                        <input
+                            type="text"
+                            placeholder="Buscar N° Pedido..."
+                            value={filtroPedido}
+                            onChange={e => setFiltroPedido(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="filtro-item">
+                        <FontAwesomeIcon icon={faSearch} className="filtro-icon" />
+                        <input
+                            type="text"
+                            placeholder="Buscar N° Vale..."
+                            value={filtroVale}
+                            onChange={e => setFiltroVale(e.target.value)}
+                        />
+                    </div>
                 </div>
+
                 <span className="pedidos-pendientes">
                     Pedidos pendientes: <strong>{pendientes}</strong>
                 </span>
             </div>
- 
+
             <div className="entregas-list">
                 {filasFiltradas.length === 0 && (
                     <p className="entregas-empty">No hay entregas para mostrar.</p>
@@ -166,7 +211,7 @@ const EntregasRuta = () => {
                     const clave = claveEntrega(idx)
                     const estado = estados[clave] ?? "pendiente"
                     const placa = configs[fila.reporte]?.placa ?? "—"
- 
+
                     return (
                         <div key={clave} className={`entrega-card estado-${estado}`}>
                             <div className="entrega-body">
@@ -204,7 +249,7 @@ const EntregasRuta = () => {
                                     </div>
                                 )}
                             </div>
- 
+
                             <div className="entrega-actions">
                                 {estado === "pendiente" && (
                                     <>
@@ -223,7 +268,7 @@ const EntregasRuta = () => {
                     )
                 })}
             </div>
- 
+
             {/* ── Modal confirmar ── */}
             {modalConfirmar !== null && (
                 <div className="modal-overlay" onClick={() => setModalConfirmar(null)}>
@@ -241,7 +286,7 @@ const EntregasRuta = () => {
                     </div>
                 </div>
             )}
- 
+
             {/* ── Modal rechazar ── */}
             {modalRechazar !== null && (
                 <div className="modal-overlay" onClick={() => { setModalRechazar(null); setMotivo(""); setFoto(null) }}>
@@ -296,6 +341,5 @@ const EntregasRuta = () => {
         </div>
     )
 }
- 
+
 export default EntregasRuta
- 
