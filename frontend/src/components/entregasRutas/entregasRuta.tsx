@@ -23,14 +23,7 @@ const EntregasRuta = () => {
     const [foto, setFoto] = useState<string | null>(null)
     const fotoRef = useRef<HTMLInputElement>(null)
 
-    const claveEntrega = (i: number) => {
-    const fila = filas[i]
-    if (fila?.nroPedido && String(fila.nroPedido).trim().toUpperCase() !== "SIN DATOS") {
-        return `pedido_${fila.nroPedido}_${i}`
-    }
-        
-    return `entrega_row_${i}`
-    
+    const claveEntrega = (i: number) => filas[i]?.filaId ?? `row_${i}`
 
     const guiaValida = fila.nroGuia && fila.nroGuia.trim().toUpperCase() !== "SIN DATOS"
     const pedidoValido = fila.nroPedido && fila.nroPedido.trim().toUpperCase() !== "SIN DATOS"
@@ -65,17 +58,18 @@ const EntregasRuta = () => {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    nroGuia: fila.nroGuia,
-                    nroPedido: fila.nroPedido,
-                    nroVale: fila.nroVale,       
-                    razonSocial: fila.razonSocial,
-                    reporte: fila.reporte,
-                    placa: configs[fila.reporte]?.placa ?? "",
-                    estado: estadoFinal,
-                    motivoRechazo: rec?.motivo ?? null,
-                    fotoRechazo: rec?.foto ?? null,
-                    fechaProceso
-                })
+    filaId: fila.filaId,   // 👈 nuevo, va primero para que sea claro
+    nroGuia: fila.nroGuia,
+    nroPedido: fila.nroPedido,
+    nroVale: fila.nroVale,
+    razonSocial: fila.razonSocial,
+    reporte: fila.reporte,
+    placa: configs[fila.reporte]?.placa ?? "",
+    estado: estadoFinal,
+    motivoRechazo: rec?.motivo ?? null,
+    fotoRechazo: rec?.foto ?? null,
+    fechaProceso
+})
             })
             const data = await res.json()
             console.log("Respuesta guardarRegistro:", res.status, data)
