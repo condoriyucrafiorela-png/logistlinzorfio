@@ -23,10 +23,7 @@ const EntregasRuta = () => {
     const [foto, setFoto] = useState<string | null>(null)
     const fotoRef = useRef<HTMLInputElement>(null)
 
-    const claveEntrega = (i: number) => {
-    const fila = filas[i]
-    return fila && fila.nroPedido ? `${fila.nroPedido}_${i}` : String(i)
-    }
+    const claveEntrega = (i: number) => `entrega_pos_${i}`
 
     const placas = [...new Set(filas.map(f => configs[f.reporte]?.placa).filter(Boolean))]
 
