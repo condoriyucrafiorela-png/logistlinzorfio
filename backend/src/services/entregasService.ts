@@ -44,29 +44,33 @@ export const guardarSesion = async (
         )
         const sesionId = sesion.rows[0].id
 
+        const idsInsertados: number[] = []
+
         for (const e of entregas) {
-            await client.query(
+            const r = await client.query(
                 `INSERT INTO registros_entrega
                  (sesion_id, nro_guia, nro_pedido, nro_vale, razon_social, reporte, placa,
                   estado, motivo_rechazo, foto_rechazo)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                 RETURNING id`,
                 [
-                    sesionId, 
-                    e.nroGuia, 
-                    e.nroPedido, 
-                    e.nroVale, 
+                    sesionId,
+                    e.nroGuia,
+                    e.nroPedido,
+                    e.nroVale,
                     e.razonSocial,
-                    e.reporte, 
-                    e.placa, 
+                    e.reporte,
+                    e.placa,
                     e.estado,
-                    e.motivoRechazo ?? null, 
+                    e.motivoRechazo ?? null,
                     e.fotoRechazo ?? null
                 ]
             )
+            idsInsertados.push(r.rows[0].id)
         }
 
         await client.query("COMMIT")
-        return sesionId
+        return { sesionId, ids: idsInsertados }
     } catch (err) {
         await client.query("ROLLBACK")
         throw err
