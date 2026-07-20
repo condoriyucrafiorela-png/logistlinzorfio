@@ -41,8 +41,8 @@ export const guardarEntregas = async (req: Request, res: Response) => {
             return res.status(409).json({ mensaje: "Ya existe un registro guardado para hoy." })
         }
 
-        const sesionId = await entregasService.guardarSesion(fecha, usuarioId, entregas)
-        res.status(201).json({ mensaje: "Guardado correctamente.", sesionId })
+        const { sesionId, ids } = await entregasService.guardarSesion(fecha, usuarioId, entregas)
+        res.status(201).json({ mensaje: "Guardado correctamente.", sesionId, ids })
 
     } catch (error) {
         console.error("ERROR guardarEntregas:", error)
