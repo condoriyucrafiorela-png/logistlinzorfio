@@ -84,24 +84,25 @@ export const guardarSesion = async (
 export const upsertRegistro = async (sesionId: number, entrega: any) => {
     await pool.query(
         `INSERT INTO registros_entrega
-         (sesion_id, nro_guia, nro_pedido, nro_vale, razon_social, reporte, placa,
+         (sesion_id, fila_id, nro_guia, nro_pedido, nro_vale, razon_social, reporte, placa,
           estado, motivo_rechazo, foto_rechazo)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-         ON CONFLICT (sesion_id, nro_guia)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+         ON CONFLICT (sesion_id, fila_id)
          DO UPDATE SET
              estado         = EXCLUDED.estado,
              motivo_rechazo = EXCLUDED.motivo_rechazo,
              foto_rechazo   = EXCLUDED.foto_rechazo`,
         [
-            sesionId, 
-            entrega.nroGuia, 
-            entrega.nroPedido, 
-            entrega.nroVale ?? null, 
+            sesionId,
+            entrega.filaId,
+            entrega.nroGuia,
+            entrega.nroPedido,
+            entrega.nroVale ?? null,
             entrega.razonSocial,
-            entrega.reporte, 
-            entrega.placa, 
+            entrega.reporte,
+            entrega.placa,
             entrega.estado,
-            entrega.motivoRechazo ?? null, 
+            entrega.motivoRechazo ?? null,
             entrega.fotoRechazo ?? null
         ]
     )
