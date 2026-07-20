@@ -1,10 +1,12 @@
 import { createContext, useContext, useState } from "react"
 
 export interface FilaRuta {
+    filaId: string
     reporte: string; razonSocial: string; nroVale: string
     nroPedido: string; nroGuia: string; direccion: string
     distrito: string; valorTotal: string
 }
+
 export interface Configuracion {
     conductor: string; auxiliar: string; placa: string
 }
