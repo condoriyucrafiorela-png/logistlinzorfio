@@ -356,7 +356,7 @@ const ReporteRutas = () => {
                                         <div className="inc-field">
                                             <span className="inc-label">Evidencia:</span>
                                             {!e.foto_rechazo ? (
-                                                <span className="inc-value" style={{ color: "#718096", italic: "true" }}>
+                                                <span className="inc-value" style={{ color: "#718096", fontStyle: "italic" }}>
                                                     Sin foto
                                                 </span>
                                             ) : fotosCache[e.id] ? (
