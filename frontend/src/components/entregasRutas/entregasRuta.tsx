@@ -25,7 +25,7 @@ const EntregasRuta = () => {
 
     const claveEntrega = (i: number) => {
     const fila = filas[i]
-    return fila ? `${fila.nroPedido}_${i}` : String(i)
+    return fila && fila.nroPedido ? `${fila.nroPedido}_${i}` : String(i)
     }
 
     const placas = [...new Set(filas.map(f => configs[f.reporte]?.placa).filter(Boolean))]
