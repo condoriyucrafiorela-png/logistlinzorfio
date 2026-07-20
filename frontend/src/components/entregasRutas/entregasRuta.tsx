@@ -40,7 +40,7 @@ const EntregasRuta = () => {
     const guardarRegistroAPI = async (
         fila: typeof filas[0],
         estadoFinal: "conforme" | "no_despachado",
-        rec?: { motivo: string; foto: string }
+        rec?: { motivo: string; foto?: string | null }
     ) => {
         try {
             const res = await fetchConAuth(`${API_URL}/api/entregas/registro`, {
@@ -109,13 +109,14 @@ const EntregasRuta = () => {
     }
 
     const handleGuardarRechazo = async () => {
-        if (!motivo.trim() || !foto || !modalRechazar) return
+        // Se quitó '!foto' para permitir guardar sin imagen
+        if (!motivo.trim() || !modalRechazar) return
 
         const motivoFinal = motivo.trim() + "TL"
         const idx = filas.findIndex((_, i) => claveEntrega(i) === modalRechazar)
         const fila = filas[idx]
 
-        setRechazos(prev => ({ ...prev, [modalRechazar]: { motivo: motivoFinal, foto } }))
+        setRechazos(prev => ({ ...prev, [modalRechazar]: { motivo: motivoFinal, foto: foto ?? "" } }))
         setEstados(prev => ({ ...prev, [modalRechazar]: "no_despachado" }))
         setModalRechazar(null)
         setMotivo("")
@@ -250,7 +251,7 @@ const EntregasRuta = () => {
                             <small>Se agregará "TL" automáticamente (Ej: 03TL)</small>
                         </div>
                         <div className="form-group">
-                            <label>Fotografía (Obligatorio)</label>
+                            <label>Fotografía (Opcional)</label>
                             <input
                                 ref={fotoRef}
                                 type="file"
@@ -273,7 +274,7 @@ const EntregasRuta = () => {
                             <button
                                 className="btn-modal-guardar"
                                 onClick={handleGuardarRechazo}
-                                disabled={!motivo.trim() || !foto}
+                                disabled={!motivo.trim()}
                             >
                                 Guardar
                             </button>
