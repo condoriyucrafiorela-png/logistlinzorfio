@@ -28,8 +28,9 @@ const EntregasRuta = () => {
     if (fila?.nroPedido && String(fila.nroPedido).trim().toUpperCase() !== "SIN DATOS") {
         return `pedido_${fila.nroPedido}_${i}`
     }
+        
     return `entrega_row_${i}`
-    }
+    
 
     const guiaValida = fila.nroGuia && fila.nroGuia.trim().toUpperCase() !== "SIN DATOS"
     const pedidoValido = fila.nroPedido && fila.nroPedido.trim().toUpperCase() !== "SIN DATOS"
