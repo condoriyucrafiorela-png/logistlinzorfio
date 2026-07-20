@@ -23,7 +23,10 @@ const EntregasRuta = () => {
     const [foto, setFoto] = useState<string | null>(null)
     const fotoRef = useRef<HTMLInputElement>(null)
 
-    const claveEntrega = (i: number) => filas[i]?.nroGuia ?? String(i)
+    const claveEntrega = (i: number) => {
+    const fila = filas[i]
+    return fila ? `${fila.nroPedido}_${i}` : String(i)
+    }
 
     const placas = [...new Set(filas.map(f => configs[f.reporte]?.placa).filter(Boolean))]
 
@@ -109,21 +112,27 @@ const EntregasRuta = () => {
     }
 
     const handleGuardarRechazo = async () => {
-        // Se quitó '!foto' para permitir guardar sin imagen
         if (!motivo.trim() || !modalRechazar) return
 
+        const claveActual = modalRechazar
         const motivoFinal = motivo.trim() + "TL"
-        const idx = filas.findIndex((_, i) => claveEntrega(i) === modalRechazar)
+        const idx = filas.findIndex((_, i) => claveEntrega(i) === claveActual)
         const fila = filas[idx]
 
-        setRechazos(prev => ({ ...prev, [modalRechazar]: { motivo: motivoFinal, foto: foto ?? "" } }))
-        setEstados(prev => ({ ...prev, [modalRechazar]: "no_despachado" }))
+        // Guardamos los datos de rechazo con foto opcional
+        setRechazos(prev => ({ ...prev, [claveActual]: { motivo: motivoFinal, foto: foto ?? "" } }))
+        setEstados(prev => ({ ...prev, [claveActual]: "no_despachado" }))
+
+        // Cerramos el modal y limpiamos campos
         setModalRechazar(null)
         setMotivo("")
+        const fotoAEnviar = foto
         setFoto(null)
 
-        await guardarRegistroAPI(fila, "no_despachado", { motivo: motivoFinal, foto })
-        verificarYNavegar(modalRechazar, "no_despachado")
+        if (fila) {
+            await guardarRegistroAPI(fila, "no_despachado", { motivo: motivoFinal, foto: fotoAEnviar })
+        }
+        verificarYNavegar(claveActual, "no_despachado")
     }
 
     const abrirRechazar = (clave: string) => {
@@ -272,13 +281,14 @@ const EntregasRuta = () => {
                         </div>
                         <div className="modal-actions">
                             <button
+                                type="button"
                                 className="btn-modal-guardar"
                                 onClick={handleGuardarRechazo}
                                 disabled={!motivo.trim()}
                             >
                                 Guardar
                             </button>
-                            <button className="btn-modal-cancelar" onClick={() => { setModalRechazar(null); setMotivo(""); setFoto(null) }}>
+                            <button type="button" className="btn-modal-cancelar" onClick={() => { setModalRechazar(null); setMotivo(""); setFoto(null) }}>
                                 Cancelar
                             </button>
                         </div>
