@@ -38,7 +38,6 @@ export const ModalEfectividad: React.FC<Props> = ({ reporte, onClose }) => {
     const conformes = reporte.conformes || 0
     const noDespachados = reporte.no_despachados || 0
     const pctConforme = Math.round((conformes / total) * 100)
-    const pctNoDespachado = 100 - pctConforme
 
     // ── 1. Agrupar Incidencias por Código / Motivo ──
     const conteoMotivos: Record<string, number> = {}
