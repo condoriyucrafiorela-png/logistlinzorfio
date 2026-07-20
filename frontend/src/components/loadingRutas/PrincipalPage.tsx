@@ -8,6 +8,7 @@ import ExcelJS from "exceljs"
 import "./PrincipalPage.css"
 
 export interface FilaRuta {
+    filaId: string   // 👈 nuevo
     reporte: string; razonSocial: string; nroVale: string
     nroPedido: string; nroGuia: string; direccion: string
     distrito: string; valorTotal: string
@@ -75,21 +76,22 @@ const PrincipalPage = () => {
 
             const mapped: FilaRuta[] = []
             worksheet.eachRow((row, rowNum) => {
-                if (rowNum <= headerRowNum) return
-                const v = row.values as any[]
-                const tieneData = v.slice(1).some(c => c != null && c !== "")
-                if (!tieneData) return
-                mapped.push({
-                    reporte:     String(v[1]  ?? ""),
-                    razonSocial: String(v[4]  ?? ""),
-                    nroVale:     String(v[5]  ?? ""),
-                    nroPedido:   String(v[6]  ?? ""),
-                    nroGuia:     String(v[7]  ?? ""),
-                    direccion:   String(v[8]  ?? ""),
-                    distrito:    String(v[9]  ?? ""),
-                    valorTotal:  String(v[11] ?? ""),
-                })
-            })
+    if (rowNum <= headerRowNum) return
+    const v = row.values as any[]
+    const tieneData = v.slice(1).some(c => c != null && c !== "")
+    if (!tieneData) return
+    mapped.push({
+        filaId:      `${fechaProceso}_${rowNum}`,   // 👈 único por fecha+fila del Excel
+        reporte:     String(v[1]  ?? ""),
+        razonSocial: String(v[4]  ?? ""),
+        nroVale:     String(v[5]  ?? ""),
+        nroPedido:   String(v[6]  ?? ""),
+        nroGuia:     String(v[7]  ?? ""),
+        direccion:   String(v[8]  ?? ""),
+        distrito:    String(v[9]  ?? ""),
+        valorTotal:  String(v[11] ?? ""),
+    })
+})
 
             setFilas(mapped)
             setNombreArchivo(file.name)
