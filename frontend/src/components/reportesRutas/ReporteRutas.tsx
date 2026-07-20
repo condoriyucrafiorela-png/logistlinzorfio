@@ -355,10 +355,16 @@ const ReporteRutas = () => {
                                         </div>
                                         <div className="inc-field">
                                             <span className="inc-label">Evidencia:</span>
-                                            {fotosCache[e.id] ? (
+                                            {!e.foto_rechazo ? (
+                                                <span className="inc-value" style={{ color: "#718096", italic: "true" }}>
+                                                    Sin foto
+                                                </span>
+                                            ) : fotosCache[e.id] ? (
                                                 <img src={fotosCache[e.id]} className="inc-foto" alt="evidencia" />
                                             ) : (
-                                                <button className="btn-ver-foto" onClick={() => cargarFoto(e.id)}>Ver foto</button>
+                                                <button className="btn-ver-foto" onClick={() => cargarFoto(e.id)}>
+                                                    Ver foto
+                                                </button>
                                             )}
                                         </div>
 
