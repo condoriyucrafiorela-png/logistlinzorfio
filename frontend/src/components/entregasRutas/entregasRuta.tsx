@@ -23,7 +23,18 @@ const EntregasRuta = () => {
     const [foto, setFoto] = useState<string | null>(null)
     const fotoRef = useRef<HTMLInputElement>(null)
 
-    const claveEntrega = (i: number) => `entrega_pos_${i}`
+    const claveEntrega = (i: number) => {
+    const fila = filas[i]
+    if (!fila) return `entrega_${i}`
+
+    const guiaValida = fila.nroGuia && fila.nroGuia.trim().toUpperCase() !== "SIN DATOS"
+    const pedidoValido = fila.nroPedido && fila.nroPedido.trim().toUpperCase() !== "SIN DATOS"
+
+    if (guiaValida) return `guia_${fila.nroGuia.trim()}_${i}`
+    if (pedidoValido) return `pedido_${fila.nroPedido.trim()}_${i}`
+
+    return `row_${i}`
+}
 
     const placas = [...new Set(filas.map(f => configs[f.reporte]?.placa).filter(Boolean))]
 
