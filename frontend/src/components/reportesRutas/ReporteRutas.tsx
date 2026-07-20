@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCalendarDays, faPencil, faCircleCheck, faTrashCan } from "@fortawesome/free-solid-svg-icons"
 import "./ReporteRutas.css"
 import { useRutas } from "../../context/RutasContext"
+import { ModalEfectividad } from "./ModalEfectividad"
 import { API_URL, fetchConAuth } from "../../config/api"
 
 interface RegistroEntrega {
@@ -91,6 +92,8 @@ const ReporteRutas = () => {
     const [modalEstado, setModalEstado] = useState<RegistroEntrega | null>(null)
     const [nuevoEstado, setNuevoEstado] = useState("")
     const [guardandoEstado, setGuardandoEstado] = useState(false)
+
+    const [mostrarModalAnalisis, setMostrarModalAnalisis] = useState(false)
 
     // Carga de datos desde la API
     const fetchReporte = async (f: string) => {
@@ -185,21 +188,21 @@ const ReporteRutas = () => {
 
     // Disparadores de formularios en modales
     const abrirGestion = (e: RegistroEntrega) => {
-    setModalGestion(e)
-    setTipoGestion("Reprogramar")
-    setDescripcionGestion("")
-    setSugerenciasMotivo([])
-    setMostrarSugMotivo(false)
+        setModalGestion(e)
+        setTipoGestion("Reprogramar")
+        setDescripcionGestion("")
+        setSugerenciasMotivo([])
+        setMostrarSugMotivo(false)
 
-    let conductorReporte = e.chofer || ""
+        let conductorReporte = e.chofer || ""
 
-    if (!conductorReporte && fecha === fechaProceso) {
-        conductorReporte = configs[e.reporte]?.conductor || ""
+        if (!conductorReporte && fecha === fechaProceso) {
+            conductorReporte = configs[e.reporte]?.conductor || ""
+        }
+
+        setChofer(conductorReporte)
+        setMostrarConfirmacion(false)
     }
-
-    setChofer(conductorReporte)
-    setMostrarConfirmacion(false)
-}
 
     const cerrarModalGestion = () => {
         setModalGestion(null)
@@ -367,9 +370,15 @@ const ReporteRutas = () => {
                                 <span className="card-label">No Despachados</span>
                                 <span className="card-value">{reporte.no_despachados}</span>
                             </div>
-                            <div className="report-card rosa">
-                                <span className="card-label">Efectividad</span>
+
+                            <div
+                                className="report-card rosa card-clickable"
+                                onClick={() => setMostrarModalAnalisis(true)}
+                                title="Haz clic para ver gráficos detallados de efectividad"
+                            >
+                                <span className="card-label">Efectividad 📊</span>
                                 <span className="card-value">{efectividad}%</span>
+                                <span className="card-sublabel">Ver detalle con gráficos →</span>
                             </div>
                         </div>
 
@@ -645,6 +654,15 @@ const ReporteRutas = () => {
                     </div>
                 </div>
             )}
+
+            {/* Modal de Análisis de Efectividad */}
+            {mostrarModalAnalisis && reporte && (
+                <ModalEfectividad
+                    reporte={reporte}
+                    onClose={() => setMostrarModalAnalisis(false)}
+                />
+            )}
+
         </div>
     )
 }

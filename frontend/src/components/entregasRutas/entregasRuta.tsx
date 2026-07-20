@@ -1,6 +1,6 @@
 import { useRef, useState } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faFilter, faCheck, faTimes, faCamera, faSearch } from "@fortawesome/free-solid-svg-icons"
+import { faFilter, faCheck, faTimes, faCamera, faSearch, faCheckDouble } from "@fortawesome/free-solid-svg-icons"
 import { useRutas } from "../../context/RutasContext"
 import { useNavigate } from "react-router-dom"
 import "./entregasRuta.css"
@@ -22,8 +22,14 @@ const EntregasRuta = () => {
     const [filtroPedido, setFiltroPedido] = useState("")
     const [filtroVale, setFiltroVale] = useState("")
 
+    // Modales individuales
     const [modalConfirmar, setModalConfirmar] = useState<string | null>(null)
     const [modalRechazar, setModalRechazar] = useState<string | null>(null)
+
+    // ── Nuevo: Modal y estado para la confirmación masiva de pendientes ──
+    const [modalBulk, setModalBulk] = useState(false)
+    const [cargandoBulk, setCargandoBulk] = useState(false)
+
     const [motivo, setMotivo] = useState("")
     const [foto, setFoto] = useState<string | null>(null)
     const fotoRef = useRef<HTMLInputElement>(null)
@@ -32,7 +38,7 @@ const EntregasRuta = () => {
 
     const placas = [...new Set(filas.map(f => configs[f.reporte]?.placa).filter(Boolean))]
 
-    // ── Lógica de filtrado dinámico combinado ──
+    // ── Lógica de filtrado combinado ──
     const filasFiltradas = filas.filter(f => {
         const cumplePlaca = filtroPlaca === "todas" || configs[f.reporte]?.placa === filtroPlaca
         const cumpleGuia = f.nroGuia.toLowerCase().includes(filtroGuia.toLowerCase().trim())
@@ -49,39 +55,77 @@ const EntregasRuta = () => {
 
     // ── Guardar registro individual en backend ──
     const guardarRegistroAPI = async (
-    fila: typeof filas[0],
-    estadoFinal: "conforme" | "no_despachado",
-    rec?: { motivo: string; foto?: string | null }
-) => {
-    try {
-        const res = await fetchConAuth(`${API_URL}/api/entregas/registro`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                filaId: fila.filaId,
-                nroGuia: fila.nroGuia,
-                nroPedido: fila.nroPedido,
-                nroVale: fila.nroVale,
-                razonSocial: fila.razonSocial,
-                reporte: fila.reporte,
-                placa: configs[fila.reporte]?.placa ?? "",
-                chofer: configs[fila.reporte]?.conductor ?? "", // 👈 AHORA SÍ SE ENVÍA EL CHOFER A LA BD
-                estado: estadoFinal,
-                motivoRechazo: rec?.motivo ?? null,
-                fotoRechazo: rec?.foto ?? null,
-                fechaProceso
+        fila: typeof filas[0],
+        estadoFinal: "conforme" | "no_despachado",
+        rec?: { motivo: string; foto?: string | null }
+    ) => {
+        try {
+            const res = await fetchConAuth(`${API_URL}/api/entregas/registro`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    filaId: fila.filaId,
+                    nroGuia: fila.nroGuia,
+                    nroPedido: fila.nroPedido,
+                    nroVale: fila.nroVale,
+                    razonSocial: fila.razonSocial,
+                    reporte: fila.reporte,
+                    placa: configs[fila.reporte]?.placa ?? "",
+                    chofer: configs[fila.reporte]?.conductor ?? "",
+                    estado: estadoFinal,
+                    motivoRechazo: rec?.motivo ?? null,
+                    fotoRechazo: rec?.foto ?? null,
+                    fechaProceso
+                })
             })
-        })
-        const data = await res.json()
-        console.log("Respuesta guardarRegistro:", res.status, data)
-    } catch (err) {
-        console.error("Error guardarRegistroAPI:", err)
+            return res.ok
+        } catch (err) {
+            console.error("Error guardarRegistroAPI:", err)
+            return false
+        }
     }
-}
 
-    // Verifica si quedan pendientes después de un cambio de estado
+    // ── LÓGICA MASIVA: Confirmar solo los pendientes restantes ──
+    const handleConfirmarPendientesMasivo = async () => {
+        // 1. Obtenemos ÚNICAMENTE las filas que siguen en estado 'pendiente'
+        const pendientesFilas = filas.filter((_, i) => {
+            const k = claveEntrega(i)
+            return !estados[k] || estados[k] === "pendiente"
+        })
+
+        if (pendientesFilas.length === 0) return
+
+        setCargandoBulk(true)
+
+        try {
+            const nuevosEstados = { ...estados }
+
+            // 2. Disparamos la actualización en paralelo hacia la base de datos
+            const peticiones = pendientesFilas.map(fila => {
+                const idx = filas.indexOf(fila)
+                const k = claveEntrega(idx)
+                nuevosEstados[k] = "entregado"
+                return guardarRegistroAPI(fila, "conforme")
+            })
+
+            await Promise.all(peticiones)
+
+            // 3. Actualizamos el estado global en React
+            setEstados(nuevosEstados)
+            setModalBulk(false)
+
+            // 4. Redirigimos a reportes
+            navigate(`/gestion/reportes?fecha=${fechaProceso}`)
+        } catch (error) {
+            console.error("Error al procesar entregas masivas:", error)
+            alert("Hubo un inconveniente procesando algunas entregas.")
+        } finally {
+            setCargandoBulk(false)
+        }
+    }
+
     const verificarYNavegar = (clave: string, nuevoEstado: "entregado" | "no_despachado") => {
         const nuevosEstados = { ...estados, [clave]: nuevoEstado }
         const quedanPendientes = filas.some((_, i) => {
@@ -112,10 +156,10 @@ const EntregasRuta = () => {
         try {
             const res = await fetchConAuth(`${API_URL}/api/entregas/subir-foto`, {
                 method: "POST",
-                body: formData  
+                body: formData
             })
             const data = await res.json()
-            setFoto(data.ruta)       
+            setFoto(data.ruta)
         } catch {
             console.error("Error al subir foto")
         }
@@ -129,11 +173,9 @@ const EntregasRuta = () => {
         const idx = filas.findIndex((_, i) => claveEntrega(i) === claveActual)
         const fila = filas[idx]
 
-        // Guardamos los datos de rechazo con foto opcional
         setRechazos(prev => ({ ...prev, [claveActual]: { motivo: motivoFinal, foto: foto ?? "" } }))
         setEstados(prev => ({ ...prev, [claveActual]: "no_despachado" }))
 
-        // Cerramos el modal y limpiamos campos
         setModalRechazar(null)
         setMotivo("")
         const fotoAEnviar = foto
@@ -156,7 +198,7 @@ const EntregasRuta = () => {
             <h1>Mis Entregas</h1>
 
             <div className="entregas-header">
-                {/* ── Contenedor de Filtros ── */}
+                {/* Contenedor de Filtros */}
                 <div className="filtros-busqueda-wrap">
                     <div className="filtro-item">
                         <FontAwesomeIcon icon={faFilter} className="filtro-icon" />
@@ -198,9 +240,23 @@ const EntregasRuta = () => {
                     </div>
                 </div>
 
-                <span className="pedidos-pendientes">
-                    Pedidos pendientes: <strong>{pendientes}</strong>
-                </span>
+                <div className="entregas-header-derecha">
+                    <span className="pedidos-pendientes">
+                        Pedidos pendientes: <strong>{pendientes}</strong>
+                    </span>
+
+                    {/* ── BOTÓN MASIVO PARA COMPLETAR PENDIENTES ── */}
+                    {pendientes > 0 && (
+                        <button
+                            className="btn-confirmar-todos"
+                            onClick={() => setModalBulk(true)}
+                            title="Marcar todos los pedidos restantes como Entregados"
+                        >
+                            <FontAwesomeIcon icon={faCheckDouble} />
+                            Entregar Pendientes ({pendientes})
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="entregas-list">
@@ -270,7 +326,52 @@ const EntregasRuta = () => {
                 })}
             </div>
 
-            {/* ── Modal confirmar ── */}
+            {/* ── Modal Confirmación Masiva de Pendientes ── */}
+            {modalBulk && (
+                <div className="modal-overlay" onClick={() => !cargandoBulk && setModalBulk(false)}>
+                    <div className="modal-card" onClick={e => e.stopPropagation()}>
+                        <h3 style={{ color: "#1e293b", fontSize: "1.2rem", marginBottom: "12px" }}>
+                            ⚠️ Confirmación Masiva
+                        </h3>
+
+                        <p style={{ fontSize: "1rem", color: "#334155", lineHeight: "1.5" }}>
+                            ¿Estás seguro/a de definir los <strong>{pendientes} pedidos pendientes</strong> como <strong>ENTREGADOS</strong>?
+                        </p>
+
+                        <div style={{
+                            background: "#f1f5f9",
+                            borderLeft: "4px solid #2563eb",
+                            padding: "10px 12px",
+                            borderRadius: "6px",
+                            marginTop: "12px",
+                            fontSize: "0.82rem",
+                            color: "#475569"
+                        }}>
+                            💡 <strong>Nota:</strong> Los pedidos que ya marcaste como <em>"NO DESPACHADO"</em> no sufrirán ningún cambio y mantendrán su incidencia guardada.
+                        </div>
+
+                        <div className="modal-actions" style={{ marginTop: "20px" }}>
+                            <button
+                                className="btn-modal-ok"
+                                style={{ background: "#2563eb", fontWeight: "600" }}
+                                onClick={handleConfirmarPendientesMasivo}
+                                disabled={cargandoBulk}
+                            >
+                                {cargandoBulk ? "Procesando..." : "Sí, marcar como ENTREGADOS"}
+                            </button>
+                            <button
+                                className="btn-modal-cancelar"
+                                onClick={() => setModalBulk(false)}
+                                disabled={cargandoBulk}
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Modal confirmar individual ── */}
             {modalConfirmar !== null && (
                 <div className="modal-overlay" onClick={() => setModalConfirmar(null)}>
                     <div className="modal-card" onClick={e => e.stopPropagation()}>
@@ -288,7 +389,7 @@ const EntregasRuta = () => {
                 </div>
             )}
 
-            {/* ── Modal rechazar ── */}
+            {/* ── Modal rechazar individual ── */}
             {modalRechazar !== null && (
                 <div className="modal-overlay" onClick={() => { setModalRechazar(null); setMotivo(""); setFoto(null) }}>
                     <div className="modal-card" onClick={e => e.stopPropagation()}>

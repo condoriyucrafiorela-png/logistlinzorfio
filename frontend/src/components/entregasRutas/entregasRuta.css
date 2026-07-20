@@ -328,3 +328,34 @@
 .filtro-item input {
     width: 140px;
 }
+
+.entregas-header-derecha {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.btn-confirmar-todos {
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+    transition: background 0.2s, transform 0.1s;
+}
+
+.btn-confirmar-todos:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+.btn-confirmar-todos:active {
+    transform: translateY(0);
+}

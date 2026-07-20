@@ -492,3 +492,18 @@
 }
 
 .btn-ir-incidencias:hover { opacity: .85; }
+
+.card-clickable {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.card-clickable:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(236, 72, 153, 0.25);
+}
+.card-sublabel {
+    font-size: 0.75rem;
+    margin-top: 4px;
+    font-weight: 600;
+    opacity: 0.85;
+}
